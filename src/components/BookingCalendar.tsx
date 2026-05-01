@@ -53,6 +53,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   const [confirmSlot, setConfirmSlot] = useState<{ date: Date; machine: number } | null>(null)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
+  const hasOneSignal = !!process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID
 
   const weekEnd = addDays(weekStart, 6)
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
@@ -76,17 +77,17 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   useEffect(() => { fetchBookings() }, [fetchBookings])
 
   useEffect(() => {
-    if ("serviceWorker" in navigator && "PushManager" in window) {
-      Notification.requestPermission().then((perm) => {
-        if (perm === "granted") {
-          navigator.serviceWorker.ready.then(async (reg) => {
-            const sub = await reg.pushManager.getSubscription()
-            setPushEnabled(!!sub)
-          })
-        }
-      })
-    }
-  }, [])
+    if (!hasOneSignal) return
+    // Check OneSignal permission once SDK loads
+    const interval = setInterval(() => {
+      const os = (window as { OneSignal?: { Notifications?: { permission: boolean } } }).OneSignal
+      if (os?.Notifications !== undefined) {
+        setPushEnabled(os.Notifications.permission)
+        clearInterval(interval)
+      }
+    }, 800)
+    return () => clearInterval(interval)
+  }, [hasOneSignal])
 
   function findBooking(day: Date, machine: number, type: string): Booking | undefined {
     return bookings.find((b) => {
@@ -141,30 +142,13 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   }
 
   async function togglePush() {
-    if (!("serviceWorker" in navigator)) return
+    if (!hasOneSignal) return
+    const os = (window as { OneSignal?: { Notifications?: { requestPermission: () => Promise<void>; permission: boolean } } }).OneSignal
+    if (!os?.Notifications) return
     setPushLoading(true)
-
-    const reg = await navigator.serviceWorker.ready
-
-    if (pushEnabled) {
-      const sub = await reg.pushManager.getSubscription()
-      if (sub) {
-        await sub.unsubscribe()
-        await fetch("/api/notifications/subscribe", { method: "DELETE" })
-      }
-      setPushEnabled(false)
-    } else {
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-      })
-      await fetch("/api/notifications/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sub),
-      })
-      setPushEnabled(true)
+    if (!pushEnabled) {
+      await os.Notifications.requestPermission().catch(() => {})
+      setPushEnabled(os.Notifications.permission)
     }
     setPushLoading(false)
   }
@@ -223,22 +207,24 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
           </button>
         </div>
 
-        <button
-          onClick={togglePush}
-          disabled={pushLoading}
-          className={`ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
-            pushEnabled
-              ? "bg-green-50 border-green-200 text-green-700"
-              : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          {pushLoading ? (
-            <Loader2 size={12} className="animate-spin" />
-          ) : (
-            <Bell size={12} />
-          )}
-          {pushEnabled ? "Tilkynningar virkar" : "Virkja tilkynningar"}
-        </button>
+        {hasOneSignal && (
+          <button
+            onClick={togglePush}
+            disabled={pushLoading}
+            className={`ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+              pushEnabled
+                ? "bg-green-50 border-green-200 text-green-700"
+                : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            {pushLoading ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Bell size={12} />
+            )}
+            {pushEnabled ? "Tilkynningar virkar" : "Virkja tilkynningar"}
+          </button>
+        )}
       </div>
 
       {/* Calendar grid */}
@@ -414,11 +400,3 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   )
 }
 
-function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/")
-  const rawData = window.atob(base64)
-  const array = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; i++) array[i] = rawData.charCodeAt(i)
-  return array.buffer
-}
