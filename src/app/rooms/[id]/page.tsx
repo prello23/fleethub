@@ -9,7 +9,7 @@ import type { Metadata } from "next"
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
   const room = await prisma.room.findUnique({ where: { id }, select: { name: true } })
-  return { title: room ? `${room.name} | Bókunarkerfi` : "Þvottahús | Bókunarkerfi" }
+  return { title: room ? `${room.name} | Laundry` : "Laundry Room | Laundry" }
 }
 
 export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,7 +36,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
               <Link
                 href={`/admin/rooms/${room.id}`}
                 className="p-2.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 touch-manipulation"
-                title="Breyta stillingum"
+                title="Edit settings"
               >
                 <Settings size={18} />
               </Link>
@@ -51,15 +51,15 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-4 py-2.5 text-sm">
           <WashingMachine size={16} className="text-blue-500" />
-          <span className="text-gray-600">{room.washingMachines} þvottavélar</span>
+          <span className="text-gray-600">{room.washingMachines} washing machines</span>
         </div>
         <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-4 py-2.5 text-sm">
           <Waves size={16} className="text-teal-500" />
-          <span className="text-gray-600">{room.dryers} þurrkarar</span>
+          <span className="text-gray-600">{room.dryers} dryers</span>
         </div>
         <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-4 py-2.5 text-sm">
           <Clock size={16} className="text-gray-400" />
-          <span className="text-gray-600">{room.slotDurationMinutes} mínútna tímar</span>
+          <span className="text-gray-600">{room.slotDurationMinutes} min slots</span>
         </div>
       </div>
 

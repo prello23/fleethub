@@ -24,8 +24,8 @@ export default async function SuperAdminAdminsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Admins &amp; Notendur</h1>
-        <p className="text-gray-500 text-sm mt-1">Skoðaðu aðgang allra og breyttu hlutverkum</p>
+        <h1 className="text-2xl font-bold text-gray-900">Admins &amp; Users</h1>
+        <p className="text-gray-500 text-sm mt-1">View and manage all accounts and roles</p>
       </div>
       <AdminOverview admins={admins} allUsers={allUsers} />
     </div>

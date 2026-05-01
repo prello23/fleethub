@@ -6,7 +6,6 @@ generator client {
 datasource db {
   provider = "sqlite"
 }
-  
 
 model User {
   id               String         @id @default(cuid())
@@ -19,20 +18,35 @@ model User {
   createdAt        DateTime       @default(now())
   bookings         Booking[]
   subscription     Subscription?
+  rooms            UserRoom[]
+  charges          Charge[]
 }
 
 model Room {
-  id                     String    @id @default(cuid())
+  id                     String     @id @default(cuid())
   name                   String
   description            String?
-  washingMachines        Int       @default(2)
-  dryers                 Int       @default(1)
-  slotDurationMinutes    Int       @default(60)
-  notifyMinutesBefore    Int       @default(30)
-  notifyMinutesBeforeEnd Int       @default(10)
+  washingMachines        Int        @default(2)
+  dryers                 Int        @default(1)
+  slotDurationMinutes    Int        @default(60)
+  notifyMinutesBefore    Int        @default(30)
+  notifyMinutesBeforeEnd Int        @default(10)
+  pricePerSlot           Float      @default(0)
   ownerId                String?
-  createdAt              DateTime  @default(now())
+  createdAt              DateTime   @default(now())
   bookings               Booking[]
+  users                  UserRoom[]
+  charges                Charge[]
+}
+
+model UserRoom {
+  userId    String
+  roomId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roomId])
 }
 
 model Booking {
@@ -48,6 +62,21 @@ model Booking {
   createdAt     DateTime @default(now())
   room          Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  charge        Charge?
+}
+
+model Charge {
+  id        String   @id @default(cuid())
+  userId    String
+  roomId    String
+  bookingId String   @unique
+  amount    Float
+  currency  String   @default("ISK")
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 model Plan {

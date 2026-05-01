@@ -14,32 +14,41 @@ function getTransporter() {
   })
 }
 
+export function isEmailConfigured(): boolean {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+}
+
 export async function sendEmail(opts: {
   to: string
   subject: string
   html: string
-}) {
+}): Promise<boolean> {
   const transporter = getTransporter()
-  if (!transporter) return
+  if (!transporter) return false
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || "Laundry Booking <noreply@laundry.local>",
-    to: opts.to,
-    subject: opts.subject,
-    html: opts.html,
-  })
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || "Laundry Booking <noreply@laundry.local>",
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    })
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function bookingStartEmail(name: string, roomName: string, startTime: Date, minutesBefore: number) {
   return {
-    subject: `Þvottahús minnisatriði – ${roomName}`,
+    subject: `Laundry reminder – ${roomName}`,
     html: `
       <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px">
-        <h2 style="color:#2563eb">🧺 Þvottahús minnisatriði</h2>
-        <p>Halló <strong>${name}</strong>,</p>
-        <p>Tíminn þinn í <strong>${roomName}</strong> byrjar <strong>eftir ${minutesBefore} mínútur</strong>.</p>
-        <p><strong>Byrjunartími:</strong> ${startTime.toLocaleTimeString("is-IS", { hour: "2-digit", minute: "2-digit" })}</p>
-        <p style="color:#6b7280;font-size:14px">Þetta er sjálfvirk tilkynning frá Þvottahús bókunarkerfi.</p>
+        <h2 style="color:#2563eb">🧺 Laundry reminder</h2>
+        <p>Hello <strong>${name}</strong>,</p>
+        <p>Your slot in <strong>${roomName}</strong> starts in <strong>${minutesBefore} minutes</strong>.</p>
+        <p><strong>Start time:</strong> ${startTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</p>
+        <p style="color:#6b7280;font-size:14px">This is an automated notification from the Laundry Booking system.</p>
       </div>
     `,
   }
@@ -47,16 +56,17 @@ export function bookingStartEmail(name: string, roomName: string, startTime: Dat
 
 export function bookingEndEmail(name: string, roomName: string, endTime: Date, minutesBefore: number) {
   return {
-    subject: `Þvottahús – Tími að klárast – ${roomName}`,
+    subject: `Laundry – Slot ending soon – ${roomName}`,
     html: `
       <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px">
-        <h2 style="color:#dc2626">⏰ Tíminn er að klárast</h2>
-        <p>Halló <strong>${name}</strong>,</p>
-        <p>Tíminn þinn í <strong>${roomName}</strong> klárast <strong>eftir ${minutesBefore} mínútur</strong>.</p>
-        <p><strong>Lokatími:</strong> ${endTime.toLocaleTimeString("is-IS", { hour: "2-digit", minute: "2-digit" })}</p>
-        <p>Vinsamlegast mundu að sækja þvottinn þinn.</p>
-        <p style="color:#6b7280;font-size:14px">Þetta er sjálfvirk tilkynning frá Þvottahús bókunarkerfi.</p>
+        <h2 style="color:#dc2626">⏰ Slot ending soon</h2>
+        <p>Hello <strong>${name}</strong>,</p>
+        <p>Your slot in <strong>${roomName}</strong> ends in <strong>${minutesBefore} minutes</strong>.</p>
+        <p><strong>End time:</strong> ${endTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</p>
+        <p>Please remember to collect your laundry.</p>
+        <p style="color:#6b7280;font-size:14px">This is an automated notification from the Laundry Booking system.</p>
       </div>
     `,
   }
 }
+

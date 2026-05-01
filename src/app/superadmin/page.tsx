@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { Crown, Users, CreditCard, WashingMachine, TrendingUp, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
-import { is } from "date-fns/locale"
+import { enUS } from "date-fns/locale"
 
 export default async function SuperAdminPage() {
   const session = await auth()
@@ -36,14 +36,14 @@ export default async function SuperAdminPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Super Admin</h1>
-          <p className="text-gray-500 text-sm">Heildaryfirlit kerfisins</p>
+          <p className="text-gray-500 text-sm">System overview</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Notendur</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Users</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{totalUsers}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
@@ -51,11 +51,11 @@ export default async function SuperAdminPage() {
           <p className="text-3xl font-bold text-blue-700 mt-1">{totalAdmins}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Þvottahús</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Laundry rooms</p>
           <p className="text-3xl font-bold text-teal-600 mt-1">{totalRooms}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Virkar áskriftir</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Active subscriptions</p>
           <p className="text-3xl font-bold text-green-600 mt-1">{activeSubs}</p>
         </div>
       </div>
@@ -65,9 +65,9 @@ export default async function SuperAdminPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
           <AlertCircle className="text-amber-500 flex-shrink-0" size={20} />
           <div>
-            <p className="font-medium text-amber-800">{adminsWithoutSub} Admin{adminsWithoutSub > 1 ? "s" : ""} án áskriftar</p>
+            <p className="font-medium text-amber-800">{adminsWithoutSub} Admin{adminsWithoutSub > 1 ? "s" : ""} without a subscription</p>
             <p className="text-sm text-amber-600">
-              <Link href="/superadmin/admins" className="underline">Skoða Admins</Link> og úthluta áskrift.
+              <Link href="/superadmin/admins" className="underline">View Admins</Link> and assign a subscription.
             </p>
           </div>
         </div>
@@ -79,9 +79,9 @@ export default async function SuperAdminPage() {
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
               <Users className="text-blue-700" size={20} />
             </div>
-            <h2 className="font-semibold text-gray-900">Admins &amp; Aðgangar</h2>
+            <h2 className="font-semibold text-gray-900">Admins &amp; Accounts</h2>
           </div>
-          <p className="text-sm text-gray-500">Skoðaðu alla admins, áskriftir þeirra og bókanir. Opnaðu aðgang hvaða notanda sem er.</p>
+          <p className="text-sm text-gray-500">View all admins, their subscriptions and bookings. Log in as any user.</p>
         </Link>
 
         <Link href="/superadmin/subscriptions" className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-green-200 transition-all group">
@@ -89,9 +89,9 @@ export default async function SuperAdminPage() {
             <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
               <CreditCard className="text-green-700" size={20} />
             </div>
-            <h2 className="font-semibold text-gray-900">Áskriftir</h2>
+            <h2 className="font-semibold text-gray-900">Subscriptions</h2>
           </div>
-          <p className="text-sm text-gray-500">Stjórnaðu áskriftum allra Admins. Breyttu áætlun, stöðu og lokadegi.</p>
+          <p className="text-sm text-gray-500">Manage subscriptions for all admins. Change plan, status and end date.</p>
         </Link>
 
         <Link href="/superadmin/plans" className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-purple-200 transition-all group">
@@ -99,9 +99,9 @@ export default async function SuperAdminPage() {
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
               <TrendingUp className="text-purple-700" size={20} />
             </div>
-            <h2 className="font-semibold text-gray-900">Verðáætlanir</h2>
+            <h2 className="font-semibold text-gray-900">Plans</h2>
           </div>
-          <p className="text-sm text-gray-500">Búðu til og breyttu verðáætlunum fyrir Admin aðganga.</p>
+          <p className="text-sm text-gray-500">Create and edit pricing plans for admin accounts.</p>
         </Link>
       </div>
 
@@ -109,18 +109,18 @@ export default async function SuperAdminPage() {
         {/* Plans overview */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Verðáætlanir</h3>
-            <Link href="/superadmin/plans" className="text-xs text-purple-600 hover:underline">Sjá allar</Link>
+            <h3 className="font-semibold text-gray-900">Plans</h3>
+            <Link href="/superadmin/plans" className="text-xs text-purple-600 hover:underline">See all</Link>
           </div>
           <div className="space-y-3">
             {plans.map((plan) => (
               <div key={plan.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                 <div>
                   <p className="font-medium text-sm text-gray-900">{plan.name}</p>
-                  <p className="text-xs text-gray-400">Allt að {plan.maxRooms === 999 ? "∞" : plan.maxRooms} þvottahús</p>
+                  <p className="text-xs text-gray-400">Up to {plan.maxRooms === 999 ? "∞" : plan.maxRooms} laundry rooms</p>
                 </div>
                 <span className="font-bold text-gray-900 text-sm">
-                  {plan.price.toLocaleString("is-IS")} {plan.currency}/mán.
+                  {plan.price.toLocaleString("en-US")} {plan.currency}/mo.
                 </span>
               </div>
             ))}
@@ -130,12 +130,12 @@ export default async function SuperAdminPage() {
         {/* Recent subscriptions */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Nýlegar áskriftir</h3>
-            <Link href="/superadmin/subscriptions" className="text-xs text-green-600 hover:underline">Sjá allar</Link>
+            <h3 className="font-semibold text-gray-900">Recent subscriptions</h3>
+            <Link href="/superadmin/subscriptions" className="text-xs text-green-600 hover:underline">See all</Link>
           </div>
           <div className="space-y-3">
             {recentSubs.length === 0 && (
-              <p className="text-sm text-gray-400">Engar áskriftir skráðar</p>
+              <p className="text-sm text-gray-400">No subscriptions yet</p>
             )}
             {recentSubs.map((sub) => (
               <div key={sub.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
@@ -150,10 +150,10 @@ export default async function SuperAdminPage() {
                     sub.status === "CANCELLED" ? "bg-red-100 text-red-700" :
                     "bg-gray-100 text-gray-600"
                   }`}>
-                    {sub.status === "ACTIVE" ? "Virk" : sub.status === "TRIAL" ? "Prufa" : sub.status === "CANCELLED" ? "Hætt við" : "Útrunnin"}
+                    {sub.status === "ACTIVE" ? "Active" : sub.status === "TRIAL" ? "Trial" : sub.status === "CANCELLED" ? "Cancelled" : "Expired"}
                   </span>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {format(new Date(sub.createdAt), "d. MMM", { locale: is })}
+                    {format(new Date(sub.createdAt), "d MMM", { locale: enUS })}
                   </p>
                 </div>
               </div>

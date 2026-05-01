@@ -3,7 +3,26 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  const rooms = await prisma.room.findMany({ orderBy: { name: "asc" } })
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { role, id: userId } = session.user
+
+  let rooms
+  if (role === "SUPER_ADMIN") {
+    rooms = await prisma.room.findMany({ orderBy: { name: "asc" } })
+  } else if (role === "ADMIN") {
+    rooms = await prisma.room.findMany({
+      where: { ownerId: userId },
+      orderBy: { name: "asc" },
+    })
+  } else {
+    rooms = await prisma.room.findMany({
+      where: { users: { some: { userId } } },
+      orderBy: { name: "asc" },
+    })
+  }
+
   return NextResponse.json(rooms)
 }
 
@@ -23,6 +42,8 @@ export async function POST(req: Request) {
       slotDurationMinutes: body.slotDurationMinutes ?? 60,
       notifyMinutesBefore: body.notifyMinutesBefore ?? 30,
       notifyMinutesBeforeEnd: body.notifyMinutesBeforeEnd ?? 10,
+      pricePerSlot: body.pricePerSlot ?? 0,
+      ownerId: session.user.id,
     },
   })
   return NextResponse.json(room, { status: 201 })

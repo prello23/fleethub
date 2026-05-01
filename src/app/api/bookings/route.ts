@@ -44,7 +44,6 @@ export async function POST(req: Request) {
   const start = new Date(startTime)
   const end = new Date(start.getTime() + room.slotDurationMinutes * 60000)
 
-  // Check for conflict
   const conflict = await prisma.booking.findFirst({
     where: {
       roomId,
@@ -70,6 +69,19 @@ export async function POST(req: Request) {
       machineNumber,
       startTime: start,
       endTime: end,
+      ...(room.pricePerSlot > 0
+        ? {
+            charge: {
+              create: {
+                userId: session.user.id,
+                roomId,
+                amount: room.pricePerSlot,
+                currency: "ISK",
+                status: "PENDING",
+              },
+            },
+          }
+        : {}),
     },
     include: {
       user: { select: { id: true, name: true, apartment: true } },

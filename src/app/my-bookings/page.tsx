@@ -3,12 +3,12 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { format } from "date-fns"
-import { is } from "date-fns/locale"
+import { enUS } from "date-fns/locale"
 import { WashingMachine, Waves, Calendar, ArrowLeft, Clock } from "lucide-react"
 import CancelBookingButton from "@/components/CancelBookingButton"
 import type { Metadata } from "next"
 
-export const metadata: Metadata = { title: "Mínar bókanir | Bókunarkerfi" }
+export const metadata: Metadata = { title: "My Bookings | Laundry" }
 
 export default async function MyBookingsPage() {
   const session = await auth()
@@ -37,21 +37,21 @@ export default async function MyBookingsPage() {
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mínar bókanir</h1>
+          <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {upcoming.length} komandi {upcoming.length === 1 ? "bókun" : "bókanir"}
+            {upcoming.length} upcoming {upcoming.length === 1 ? "booking" : "bookings"}
           </p>
         </div>
       </div>
 
       <section className="mb-8">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">Komandi bókanir</h2>
+        <h2 className="text-base font-semibold text-gray-900 mb-3">Upcoming bookings</h2>
         {upcoming.length === 0 ? (
           <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-10 text-center">
             <Calendar className="mx-auto text-gray-300 mb-3" size={36} />
-            <p className="text-gray-500 text-sm">Engar komandi bókanir</p>
+            <p className="text-gray-500 text-sm">No upcoming bookings</p>
             <Link href="/rooms" className="mt-3 inline-block text-blue-700 text-sm font-medium hover:underline">
-              Bóka tíma →
+              Book a slot →
             </Link>
           </div>
         ) : (
@@ -71,13 +71,13 @@ export default async function MyBookingsPage() {
                         {b.room.name}
                       </Link>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isWasher ? "bg-blue-50 text-blue-700" : "bg-teal-50 text-teal-700"}`}>
-                        {isWasher ? "Þvottavél" : "Þurrkari"} {b.machineNumber}
+                        {isWasher ? "Washer" : "Dryer"} {b.machineNumber}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1">
                         <Calendar size={11} />
-                        {format(b.startTime, "EEEE, d. MMMM yyyy", { locale: is })}
+                        {format(b.startTime, "EEEE, d. MMMM yyyy", { locale: enUS })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock size={11} />
@@ -95,7 +95,7 @@ export default async function MyBookingsPage() {
 
       {past.length > 0 && (
         <section>
-          <h2 className="text-base font-semibold text-gray-500 mb-3">Liðnar bókanir (30 dagar)</h2>
+          <h2 className="text-base font-semibold text-gray-500 mb-3">Past bookings (30 days)</h2>
           <div className="space-y-3 opacity-60">
             {past.map((b) => {
               const isWasher = b.machineType === "WASHER"
@@ -112,13 +112,13 @@ export default async function MyBookingsPage() {
                         {b.room.name}
                       </Link>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isWasher ? "bg-blue-50 text-blue-700" : "bg-teal-50 text-teal-700"}`}>
-                        {isWasher ? "Þvottavél" : "Þurrkari"} {b.machineNumber}
+                        {isWasher ? "Washer" : "Dryer"} {b.machineNumber}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1">
                         <Calendar size={11} />
-                        {format(b.startTime, "EEEE, d. MMMM yyyy", { locale: is })}
+                        {format(b.startTime, "EEEE, d. MMMM yyyy", { locale: enUS })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock size={11} />

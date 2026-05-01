@@ -28,7 +28,7 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error || "Eitthvað fór úrskeiðis")
+      setError(data.error || "Something went wrong")
       setLoading(false)
       return
     }
@@ -43,8 +43,8 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
             <WashingMachine className="text-blue-700" size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Nýskráning</h1>
-          <p className="text-gray-500 text-sm mt-1">Búðu til aðgang á þvottahús bókunarkerfi</p>
+          <h1 className="text-2xl font-bold text-gray-900">Register</h1>
+          <p className="text-gray-500 text-sm mt-1">Create an account for the laundry room booking system</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-4">
@@ -55,31 +55,31 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nafn</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               required
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Jón Jónsson"
+              placeholder="Jane Smith"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Netfang</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               value={form.email}
               onChange={(e) => set("email", e.target.value)}
               required
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="jon@dæmi.is"
+              placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lykilorð</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               type="password"
               value={form.password}
@@ -93,14 +93,14 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Íbúðarnúmer <span className="text-gray-400">(valkvætt)</span>
+              Apartment <span className="text-gray-400">(optional)</span>
             </label>
             <input
               type="text"
               value={form.apartment}
               onChange={(e) => set("apartment", e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="t.d. 3B"
+              placeholder="e.g. 3B"
             />
           </div>
 
@@ -110,13 +110,13 @@ export default function RegisterPage() {
             className="w-full bg-blue-700 text-white py-2.5 rounded-lg font-medium hover:bg-blue-800 disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={16} className="animate-spin" />}
-            Búa til aðgang
+            Create account
           </button>
 
           <p className="text-center text-sm text-gray-500">
-            Ertu þegar með aðgang?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="text-blue-700 font-medium hover:underline">
-              Skrá inn
+              Sign in
             </Link>
           </p>
         </form>

@@ -3,8 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { is } from "date-fns/locale"
-import { Shield, Crown, Eye, EyeOff, User, WashingMachine, CreditCard, Loader2 } from "lucide-react"
+import { Shield, Crown, Eye, EyeOff, User, WashingMachine, Loader2, LogIn } from "lucide-react"
 
 type Plan = { id: string; name: string; price: number; currency: string }
 type Sub = { id: string; status: string; plan: Plan; endDate: string | Date | null }
@@ -16,7 +15,7 @@ type AdminUser = {
 type AnyUser = { id: string; name: string; email: string; role: string; apartment: string | null; createdAt: string | Date }
 
 const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: "Virk", TRIAL: "Prufa", CANCELLED: "Hætt við", EXPIRED: "Útrunnin",
+  ACTIVE: "Active", TRIAL: "Trial", CANCELLED: "Cancelled", EXPIRED: "Expired",
 }
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
@@ -31,6 +30,7 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
   const [viewing, setViewing] = useState<string | null>(null)
   const [viewData, setViewData] = useState<Record<string, unknown> | null>(null)
   const [loadingView, setLoadingView] = useState(false)
+  const [impersonating, setImpersonating] = useState<string | null>(null)
   const [changingRole, setChangingRole] = useState<string | null>(null)
   const [roleLoading, setRoleLoading] = useState(false)
 
@@ -46,6 +46,11 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
     const data = await res.json()
     setViewData(data)
     setLoadingView(false)
+  }
+
+  async function impersonateUser(userId: string) {
+    setImpersonating(userId)
+    window.location.href = `/api/superadmin/impersonate?userId=${userId}`
   }
 
   async function changeRole(userId: string, role: string) {
@@ -66,7 +71,7 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
     USER: <User size={14} className="text-gray-400" />,
   }
   const ROLE_LABEL: Record<string, string> = {
-    SUPER_ADMIN: "Super Admin", ADMIN: "Admin", USER: "Notandi",
+    SUPER_ADMIN: "Super Admin", ADMIN: "Admin", USER: "User",
   }
 
   return (
@@ -76,7 +81,7 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
           Admins ({admins.length})
         </button>
         <button onClick={() => setActiveTab("all")} className={`px-4 py-2 rounded-xl text-sm font-medium ${activeTab === "all" ? "bg-blue-700 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
-          Allir notendur ({allUsers.length})
+          All users ({allUsers.length})
         </button>
       </div>
 
@@ -99,48 +104,56 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
                         {STATUS_LABELS[admin.subscription.status]} — {admin.subscription.plan.name}
                       </span>
                     ) : (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Engin áskrift</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">No subscription</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{admin.email} · {admin._count.bookings} bókanir</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{admin.email} · {admin._count.bookings} bookings</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => viewUser(admin.id)}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-all ${viewing === admin.id ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
                   >
                     {loadingView && viewing === admin.id ? <Loader2 size={12} className="animate-spin" /> : viewing === admin.id ? <EyeOff size={12} /> : <Eye size={12} />}
-                    {viewing === admin.id ? "Loka" : "Skoða aðgang"}
+                    {viewing === admin.id ? "Close" : "View"}
+                  </button>
+                  <button
+                    onClick={() => impersonateUser(admin.id)}
+                    disabled={impersonating === admin.id}
+                    title="Log in as this user"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 text-xs font-medium transition-all disabled:opacity-50"
+                  >
+                    {impersonating === admin.id ? <Loader2 size={12} className="animate-spin" /> : <LogIn size={12} />}
+                    Login as
                   </button>
                 </div>
               </div>
 
-              {/* Expanded user detail */}
               {viewing === admin.id && viewData && (
                 <div className="border-t border-gray-100 bg-gray-50 p-5">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Notendaupplýsingar</h4>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">User info</h4>
                       <div className="space-y-1 text-sm">
-                        <p><span className="text-gray-500">Nafn:</span> <strong>{(viewData as Record<string, string>).name}</strong></p>
-                        <p><span className="text-gray-500">Netfang:</span> {(viewData as Record<string, string>).email}</p>
-                        <p><span className="text-gray-500">Hlutverk:</span> {ROLE_LABEL[(viewData as Record<string, string>).role]}</p>
-                        <p><span className="text-gray-500">Skráður:</span> {format(new Date((viewData as Record<string, string>).createdAt), "d. MMM yyyy", { locale: is })}</p>
+                        <p><span className="text-gray-500">Name:</span> <strong>{(viewData as Record<string, string>).name}</strong></p>
+                        <p><span className="text-gray-500">Email:</span> {(viewData as Record<string, string>).email}</p>
+                        <p><span className="text-gray-500">Role:</span> {ROLE_LABEL[(viewData as Record<string, string>).role]}</p>
+                        <p><span className="text-gray-500">Joined:</span> {format(new Date((viewData as Record<string, string>).createdAt), "d MMM yyyy")}</p>
                       </div>
                     </div>
                     <div>
                       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
-                        <WashingMachine size={12} /> Nýlegar bókanir
+                        <WashingMachine size={12} /> Recent bookings
                       </h4>
                       {((viewData as { bookings: Array<{ id: string; room: { name: string }; startTime: string; machineType: string }> }).bookings ?? []).length === 0 ? (
-                        <p className="text-sm text-gray-400">Engar bókanir</p>
+                        <p className="text-sm text-gray-400">No bookings</p>
                       ) : (
                         <div className="space-y-1">
                           {((viewData as { bookings: Array<{ id: string; room: { name: string }; startTime: string; machineType: string }> }).bookings ?? []).slice(0, 5).map((b) => (
                             <div key={b.id} className="text-xs text-gray-600 flex gap-2">
-                              <span className="text-gray-400">{format(new Date(b.startTime), "d. MMM HH:mm", { locale: is })}</span>
+                              <span className="text-gray-400">{format(new Date(b.startTime), "d MMM HH:mm")}</span>
                               <span>{b.room.name}</span>
-                              <span className="text-gray-400">{b.machineType === "WASHER" ? "Þvottavél" : "Þurrkari"}</span>
+                              <span className="text-gray-400">{b.machineType === "WASHER" ? "Washer" : "Dryer"}</span>
                             </div>
                           ))}
                         </div>
@@ -159,11 +172,11 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3 font-medium text-gray-600">Nafn</th>
-                <th className="text-left px-5 py-3 font-medium text-gray-600">Netfang</th>
-                <th className="text-left px-5 py-3 font-medium text-gray-600">Íbúð</th>
-                <th className="text-left px-5 py-3 font-medium text-gray-600">Hlutverk</th>
-                <th className="text-left px-5 py-3 font-medium text-gray-600">Skráður</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-600">Name</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-600">Email</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-600">Apartment</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-600">Role</th>
+                <th className="text-left px-5 py-3 font-medium text-gray-600">Joined</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
@@ -179,7 +192,7 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
                         <select defaultValue={u.role}
                           onChange={(e) => changeRole(u.id, e.target.value)}
                           className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
-                          <option value="USER">Notandi</option>
+                          <option value="USER">User</option>
                           <option value="ADMIN">Admin</option>
                           <option value="SUPER_ADMIN">Super Admin</option>
                         </select>
@@ -187,19 +200,22 @@ export default function AdminOverview({ admins, allUsers }: { admins: AdminUser[
                         <button onClick={() => setChangingRole(null)} className="p-1 text-gray-400 hover:text-gray-600"><span className="text-xs">✕</span></button>
                       </div>
                     ) : (
-                      <button onClick={() => setChangingRole(u.id)}
-                        className="flex items-center gap-1 text-xs hover:bg-gray-100 px-2 py-1 rounded-lg">
+                      <button onClick={() => setChangingRole(u.id)} className="flex items-center gap-1 text-xs hover:bg-gray-100 px-2 py-1 rounded-lg">
                         {ROLE_ICON[u.role]}
                         <span>{ROLE_LABEL[u.role] ?? u.role}</span>
                       </button>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-gray-400 text-xs">{format(new Date(u.createdAt), "d. MMM yyyy", { locale: is })}</td>
+                  <td className="px-5 py-3 text-gray-400 text-xs">{format(new Date(u.createdAt), "d MMM yyyy")}</td>
                   <td className="px-5 py-3">
-                    <button onClick={() => viewUser(u.id)}
-                      className={`flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border transition-all ${viewing === u.id ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}>
-                      <Eye size={11} /> Skoða
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => viewUser(u.id)} className={`flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border transition-all ${viewing === u.id ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}>
+                        <Eye size={11} /> View
+                      </button>
+                      <button onClick={() => impersonateUser(u.id)} disabled={impersonating === u.id} title="Log in as this user" className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg border border-purple-200 text-purple-600 bg-purple-50 hover:bg-purple-100 disabled:opacity-50">
+                        {impersonating === u.id ? <Loader2 size={11} className="animate-spin" /> : <LogIn size={11} />}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

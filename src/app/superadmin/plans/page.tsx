@@ -12,8 +12,8 @@ export default async function PlansPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Verðáætlanir</h1>
-        <p className="text-gray-500 text-sm mt-1">Settu verð á Admin aðganga — venjulegir notendur borga ekki</p>
+        <h1 className="text-2xl font-bold text-gray-900">Plans</h1>
+        <p className="text-gray-500 text-sm mt-1">Set pricing for admin accounts — regular users are free</p>
       </div>
       <PlanManager initialPlans={plans} />
     </div>

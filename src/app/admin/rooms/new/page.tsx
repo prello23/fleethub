@@ -15,8 +15,8 @@ export default async function NewRoomPage() {
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nýtt þvottahús</h1>
-          <p className="text-gray-500 text-sm">Stilltu nýtt þvottahús</p>
+          <h1 className="text-2xl font-bold text-gray-900">New laundry room</h1>
+          <p className="text-gray-500 text-sm">Configure a new laundry room</p>
         </div>
       </div>
       <RoomForm />

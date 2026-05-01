@@ -77,36 +77,36 @@ export default function PlanManager({ initialPlans }: { initialPlans: Plan[] }) 
           onClick={() => { setCreating(true); setEditing(null); setForm(empty) }}
           className="flex items-center gap-2 bg-purple-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-purple-800"
         >
-          <Plus size={16} /> Ný verðáætlun
+          <Plus size={16} /> New plan
         </button>
       </div>
 
       {/* Create form */}
       {creating && (
-        <PlanForm form={form} set={set} onSave={save} onCancel={() => setCreating(false)} loading={loading} title="Ný verðáætlun" />
+        <PlanForm form={form} set={set} onSave={save} onCancel={() => setCreating(false)} loading={loading} title="New plan" />
       )}
 
       <div className="space-y-3">
         {plans.map((plan) => (
           <div key={plan.id}>
             {editing === plan.id ? (
-              <PlanForm form={form} set={set} onSave={save} onCancel={() => setEditing(null)} loading={loading} title={`Breyta: ${plan.name}`} />
+              <PlanForm form={form} set={set} onSave={save} onCancel={() => setEditing(null)} loading={loading} title={`Edit: ${plan.name}`} />
             ) : (
               <div className={`bg-white rounded-2xl border p-5 flex items-center gap-4 ${plan.active ? "border-gray-200" : "border-gray-100 opacity-60"}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                    {!plan.active && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Óvirkt</span>}
+                    {!plan.active && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactive</span>}
                   </div>
                   {plan.description && <p className="text-xs text-gray-500 mb-1">{plan.description}</p>}
                   <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                    <span>Allt að {plan.maxRooms === 999 ? "∞" : plan.maxRooms} þvottahús</span>
-                    <span>{plan.intervalDays} daga tímabil</span>
+                    <span>Up to {plan.maxRooms === 999 ? "∞" : plan.maxRooms} laundry rooms</span>
+                    <span>{plan.intervalDays}-day period</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xl font-bold text-gray-900">{plan.price.toLocaleString("is-IS")}</p>
-                  <p className="text-xs text-gray-400">{plan.currency} / {plan.intervalDays} dagar</p>
+                  <p className="text-xl font-bold text-gray-900">{plan.price.toLocaleString("en-US")}</p>
+                  <p className="text-xs text-gray-400">{plan.currency} / {plan.intervalDays} days</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => startEdit(plan)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
@@ -115,9 +115,9 @@ export default function PlanManager({ initialPlans }: { initialPlans: Plan[] }) 
                   {deleting === plan.id ? (
                     <>
                       <button onClick={() => deletePlan(plan.id)} className="text-xs bg-red-600 text-white px-2 py-1 rounded-lg">
-                        {loading ? <Loader2 size={10} className="animate-spin" /> : "Já"}
+                        {loading ? <Loader2 size={10} className="animate-spin" /> : "Yes"}
                       </button>
-                      <button onClick={() => setDeleting(null)} className="text-xs px-2 py-1 border rounded-lg">Nei</button>
+                      <button onClick={() => setDeleting(null)} className="text-xs px-2 py-1 border rounded-lg">No</button>
                     </>
                   ) : (
                     <button onClick={() => setDeleting(plan.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
@@ -147,15 +147,15 @@ function PlanForm({ form, set, onSave, onCancel, loading, title }: {
       <h3 className="font-semibold text-purple-900">{title}</h3>
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Heiti áætlunar</label>
-          <input value={form.name} onChange={(e) => set("name", e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="t.d. Grunnáskrift" />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Plan name</label>
+          <input value={form.name} onChange={(e) => set("name", e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="e.g. Basic plan" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Lýsing</label>
-          <input value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Stuttlýsing..." />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <input value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Short description..." />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Verð</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
           <div className="flex gap-2">
             <input type="number" min={0} value={form.price} onChange={(e) => set("price", parseFloat(e.target.value))} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
             <select value={form.currency} onChange={(e) => set("currency", e.target.value)} className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
@@ -164,25 +164,25 @@ function PlanForm({ form, set, onSave, onCancel, loading, title }: {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tímabil (dagar)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Period (days)</label>
           <input type="number" min={1} value={form.intervalDays} onChange={(e) => set("intervalDays", parseInt(e.target.value))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Hámarks þvottahús</label>
-          <input type="number" min={1} value={form.maxRooms === 999 ? "" : form.maxRooms} onChange={(e) => set("maxRooms", e.target.value === "" ? 999 : parseInt(e.target.value))} placeholder="999 = ótakmarkað" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Max laundry rooms</label>
+          <input type="number" min={1} value={form.maxRooms === 999 ? "" : form.maxRooms} onChange={(e) => set("maxRooms", e.target.value === "" ? 999 : parseInt(e.target.value))} placeholder="999 = unlimited" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
         </div>
         <div className="flex items-center gap-3 pt-5">
           <button type="button" onClick={() => set("active", !form.active)} className={`flex items-center gap-2 text-sm font-medium ${form.active ? "text-green-700" : "text-gray-500"}`}>
             {form.active ? <ToggleRight size={24} className="text-green-600" /> : <ToggleLeft size={24} />}
-            {form.active ? "Virkt" : "Óvirkt"}
+            {form.active ? "Active" : "Inactive"}
           </button>
         </div>
       </div>
       <div className="flex gap-2 pt-2">
-        <button onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50"><X size={14} className="inline mr-1" />Hætta við</button>
+        <button onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50"><X size={14} className="inline mr-1" />Cancel</button>
         <button onClick={onSave} disabled={loading} className="flex items-center gap-2 bg-purple-700 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-purple-800 disabled:opacity-60">
           {loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-          Vista
+          Save
         </button>
       </div>
     </div>

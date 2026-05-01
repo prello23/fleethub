@@ -23,8 +23,8 @@ export default async function SubscriptionsPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Áskriftir</h1>
-        <p className="text-gray-500 text-sm mt-1">Stjórnaðu áskriftum allra Admin notenda</p>
+        <h1 className="text-2xl font-bold text-gray-900">Subscriptions</h1>
+        <p className="text-gray-500 text-sm mt-1">Manage subscriptions for all admin accounts</p>
       </div>
       <SubscriptionManager subscriptions={subscriptions} plans={plans} admins={admins} />
     </div>

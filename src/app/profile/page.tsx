@@ -6,7 +6,7 @@ import { ArrowLeft, User } from "lucide-react"
 import ProfileForm from "@/components/ProfileForm"
 import type { Metadata } from "next"
 
-export const metadata: Metadata = { title: "Prófíll | Bókunarkerfi" }
+export const metadata: Metadata = { title: "Profile | Laundry" }
 
 export default async function ProfilePage() {
   const session = await auth()
@@ -27,9 +27,9 @@ export default async function ProfilePage() {
         <div>
           <div className="flex items-center gap-2">
             <User size={20} className="text-gray-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Prófíll</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
           </div>
-          <p className="text-gray-500 text-sm mt-0.5">Stillingar fyrir þinn aðgang</p>
+          <p className="text-gray-500 text-sm mt-0.5">Manage your account settings</p>
         </div>
       </div>
 

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, isToday } from "date-fns"
-import { is } from "date-fns/locale"
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, isToday, isPast, startOfDay } from "date-fns"
+import { enUS } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, WashingMachine, Waves, X, Loader2, Bell } from "lucide-react"
 
 type Room = {
@@ -83,14 +83,12 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
     if (!el) return
     const todayIdx = days.findIndex((d) => isToday(d))
     if (todayIdx < 0) return
-    // 8 grid columns (1 time + 7 days); scroll so today is the first visible day
     const colW = el.scrollWidth / 8
     el.scrollLeft = todayIdx * colW
   }, [weekStart]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!hasOneSignal) return
-    // Check OneSignal permission once SDK loads
     const interval = setInterval(() => {
       const os = (window as { OneSignal?: { Notifications?: { permission: boolean } } }).OneSignal
       if (os?.Notifications !== undefined) {
@@ -100,17 +98,6 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
     }, 800)
     return () => clearInterval(interval)
   }, [hasOneSignal])
-
-  function findBooking(day: Date, machine: number, type: string): Booking | undefined {
-    return bookings.find((b) => {
-      const start = parseISO(b.startTime)
-      return (
-        isSameDay(start, day) &&
-        b.machineNumber === machine &&
-        b.machineType === type
-      )
-    })
-  }
 
   function isSlotBooked(day: Date, slotTime: Date, machine: number, type: string): Booking | undefined {
     return bookings.find((b) => {
@@ -140,16 +127,16 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
         fetchBookings()
       } else {
         const data = await res.json().catch(() => ({}))
-        alert(data.error === "Slot already booked" ? "Þessi tími er þegar bókaður" : "Villa við bókun")
+        alert(data.error === "Slot already booked" ? "This slot is already booked" : "Booking failed — try again")
       }
     } catch {
-      alert("Netvillu – reyndu aftur")
+      alert("Network error — try again")
     }
     setBooking(false)
   }
 
   async function handleCancel(bookingId: string) {
-    if (!confirm("Ertu viss um að þú viljir afbóka þennan tíma?")) return
+    if (!confirm("Are you sure you want to cancel this booking?")) return
     await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" })
     fetchBookings()
   }
@@ -169,26 +156,21 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   const machineCount = activeTab === "WASHER" ? room.washingMachines : room.dryers
   const machines = Array.from({ length: machineCount }, (_, i) => i + 1)
   const slots = generateSlots(new Date(), room.slotDurationMinutes)
+  const now = new Date()
 
   return (
     <div className="space-y-4">
       {/* Week navigation */}
       <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
-        <button
-          onClick={() => setWeekStart((w) => subWeeks(w, 1))}
-          className="p-1.5 rounded-lg hover:bg-gray-100"
-        >
+        <button onClick={() => setWeekStart((w) => subWeeks(w, 1))} className="p-1.5 rounded-lg hover:bg-gray-100">
           <ChevronLeft size={18} />
         </button>
         <div className="text-center">
           <p className="font-semibold text-gray-900 text-sm">
-            {format(weekStart, "d. MMM", { locale: is })} – {format(weekEnd, "d. MMM yyyy", { locale: is })}
+            {format(weekStart, "d MMM", { locale: enUS })} – {format(weekEnd, "d MMM yyyy", { locale: enUS })}
           </p>
         </div>
-        <button
-          onClick={() => setWeekStart((w) => addWeeks(w, 1))}
-          className="p-1.5 rounded-lg hover:bg-gray-100"
-        >
+        <button onClick={() => setWeekStart((w) => addWeeks(w, 1))} className="p-1.5 rounded-lg hover:bg-gray-100">
           <ChevronRight size={18} />
         </button>
       </div>
@@ -199,24 +181,20 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
           <button
             onClick={() => setActiveTab("WASHER")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "WASHER"
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+              activeTab === "WASHER" ? "bg-white text-blue-700 shadow-sm" : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <WashingMachine size={15} />
-            Þvottavélar ({room.washingMachines})
+            Washers ({room.washingMachines})
           </button>
           <button
             onClick={() => setActiveTab("DRYER")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "DRYER"
-                ? "bg-white text-teal-700 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+              activeTab === "DRYER" ? "bg-white text-teal-700 shadow-sm" : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <Waves size={15} />
-            Þurrkarar ({room.dryers})
+            Dryers ({room.dryers})
           </button>
         </div>
 
@@ -230,12 +208,8 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                 : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
             }`}
           >
-            {pushLoading ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <Bell size={12} />
-            )}
-            {pushEnabled ? "Tilkynningar virkar" : "Virkja tilkynningar"}
+            {pushLoading ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
+            {pushEnabled ? "Notifications on" : "Enable notifications"}
           </button>
         )}
       </div>
@@ -251,26 +225,30 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
             <div className="min-w-[640px]">
               {/* Day headers */}
               <div className="grid grid-cols-8 border-b border-gray-100">
-                <div className="p-3 text-xs text-gray-400 font-medium text-center">Tími</div>
-                {days.map((day) => (
-                  <div
-                    key={day.toISOString()}
-                    className={`p-3 text-center border-l border-gray-100 ${
-                      isToday(day) ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    <p className="text-xs text-gray-500 font-medium uppercase">
-                      {format(day, "EEE", { locale: is })}
-                    </p>
-                    <p
-                      className={`text-lg font-bold mt-0.5 ${
-                        isToday(day) ? "text-blue-700" : "text-gray-800"
+                <div className="p-3 text-xs text-gray-400 font-medium text-center">Time</div>
+                {days.map((day) => {
+                  const isDayPast = isPast(startOfDay(day)) && !isToday(day)
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`p-3 text-center border-l border-gray-100 ${
+                        isToday(day) ? "bg-blue-50" : isDayPast ? "bg-gray-50/80" : ""
                       }`}
                     >
-                      {format(day, "d")}
-                    </p>
-                  </div>
-                ))}
+                      <p className={`text-xs font-medium uppercase ${isDayPast ? "text-gray-300" : "text-gray-500"}`}>
+                        {format(day, "EEE", { locale: enUS })}
+                      </p>
+                      <p className={`text-lg font-bold mt-0.5 ${
+                        isToday(day) ? "text-blue-700" : isDayPast ? "text-gray-300 line-through" : "text-gray-800"
+                      }`}>
+                        {format(day, "d")}
+                      </p>
+                      {isDayPast && (
+                        <p className="text-[9px] text-gray-300 uppercase tracking-wide">past</p>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
 
               {/* Time slots per machine */}
@@ -283,7 +261,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                       <Waves size={12} className="text-teal-500" />
                     )}
                     <span className="text-xs font-semibold text-gray-600">
-                      {activeTab === "WASHER" ? "Þvottavél" : "Þurrkari"} {machine}
+                      {activeTab === "WASHER" ? "Washer" : "Dryer"} {machine}
                     </span>
                   </div>
 
@@ -301,42 +279,36 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                           slotTime.setHours(slotHour, slotMin, 0, 0)
                           const existingBooking = isSlotBooked(day, slotTime, machine, activeTab)
                           const isOwn = existingBooking?.userId === currentUserId
-                          const isPast = slotTime < new Date()
+                          const isSlotPast = slotTime < now
+                          const isDayPast = isPast(startOfDay(day)) && !isToday(day)
 
                           return (
                             <div
                               key={day.toISOString()}
                               className={`border-l border-gray-100 px-1 py-0.5 ${
-                                isToday(day) ? "bg-blue-50/40" : ""
+                                isToday(day) ? "bg-blue-50/40" : isDayPast ? "bg-gray-50/60" : ""
                               }`}
                             >
                               {existingBooking ? (
-                                <div
-                                  className={`rounded px-1.5 py-1 text-xs flex items-center justify-between gap-1 ${
-                                    isOwn
-                                      ? "bg-blue-600 text-white"
-                                      : "bg-gray-200 text-gray-600"
-                                  }`}
-                                >
+                                <div className={`rounded px-1.5 py-1 text-xs flex items-center justify-between gap-1 ${
+                                  isOwn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                                }`}>
                                   <span className="truncate text-[10px]">
-                                    {isOwn ? "Minn" : existingBooking.user.apartment || existingBooking.user.name}
+                                    {isOwn ? "Mine" : existingBooking.user.apartment || existingBooking.user.name}
                                   </span>
-                                  {isOwn && (
-                                    <button
-                                      onClick={() => handleCancel(existingBooking.id)}
-                                      className="flex-shrink-0 hover:opacity-70"
-                                    >
+                                  {isOwn && !isSlotPast && (
+                                    <button onClick={() => handleCancel(existingBooking.id)} className="flex-shrink-0 hover:opacity-70">
                                       <X size={10} />
                                     </button>
                                   )}
                                 </div>
                               ) : (
-                                !isPast && (
+                                !isSlotPast && (
                                   <button
                                     onClick={() => setConfirmSlot({ date: slotTime, machine })}
                                     className="w-full rounded px-1.5 py-1 text-[10px] text-blue-500 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 border border-blue-100 hover:border-blue-300 transition-all"
                                   >
-                                    Bóka
+                                    Book
                                   </button>
                                 )
                               )}
@@ -357,36 +329,25 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
       {confirmSlot && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Staðfesta bókun</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Confirm booking</h3>
             <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1.5 mb-5">
+              <p><span className="text-gray-500">Room:</span> <strong>{room.name}</strong></p>
               <p>
-                <span className="text-gray-500">Þvottahús:</span>{" "}
-                <strong>{room.name}</strong>
+                <span className="text-gray-500">Machine:</span>{" "}
+                <strong>{activeTab === "WASHER" ? "Washer" : "Dryer"} {confirmSlot.machine}</strong>
               </p>
               <p>
-                <span className="text-gray-500">Tæki:</span>{" "}
-                <strong>
-                  {activeTab === "WASHER" ? "Þvottavél" : "Þurrkari"} {confirmSlot.machine}
-                </strong>
+                <span className="text-gray-500">Date:</span>{" "}
+                <strong>{format(confirmSlot.date, "EEEE, d MMMM", { locale: enUS })}</strong>
               </p>
               <p>
-                <span className="text-gray-500">Dagur:</span>{" "}
-                <strong>{format(confirmSlot.date, "EEEE, d. MMMM", { locale: is })}</strong>
-              </p>
-              <p>
-                <span className="text-gray-500">Tími:</span>{" "}
+                <span className="text-gray-500">Time:</span>{" "}
                 <strong>
                   {format(confirmSlot.date, "HH:mm")} –{" "}
-                  {format(
-                    new Date(confirmSlot.date.getTime() + room.slotDurationMinutes * 60000),
-                    "HH:mm"
-                  )}
+                  {format(new Date(confirmSlot.date.getTime() + room.slotDurationMinutes * 60000), "HH:mm")}
                 </strong>
               </p>
-              <p>
-                <span className="text-gray-500">Notandi:</span>{" "}
-                <strong>{currentUserName}</strong>
-              </p>
+              <p><span className="text-gray-500">User:</span> <strong>{currentUserName}</strong></p>
             </div>
 
             <div className="flex gap-3">
@@ -395,7 +356,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                 disabled={booking}
                 className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50"
               >
-                Hætta við
+                Cancel
               </button>
               <button
                 onClick={handleBook}
@@ -403,7 +364,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                 className="flex-1 bg-blue-700 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800 disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {booking && <Loader2 size={14} className="animate-spin" />}
-                Bóka
+                Book slot
               </button>
             </div>
           </div>
@@ -412,4 +373,3 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
     </div>
   )
 }
-

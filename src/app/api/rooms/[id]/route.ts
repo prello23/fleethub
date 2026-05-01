@@ -27,6 +27,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       slotDurationMinutes: body.slotDurationMinutes,
       notifyMinutesBefore: body.notifyMinutesBefore,
       notifyMinutesBeforeEnd: body.notifyMinutesBeforeEnd,
+      pricePerSlot: body.pricePerSlot ?? 0,
     },
   })
   return NextResponse.json(room)
