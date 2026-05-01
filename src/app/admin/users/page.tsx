@@ -6,7 +6,7 @@ import UserTable from "@/components/UserTable"
 
 export default async function AdminUsersPage() {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") redirect("/rooms")
+  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
   const users = await prisma.user.findMany({
     select: { id: true, name: true, email: true, role: true, apartment: true, createdAt: true },

@@ -7,7 +7,7 @@ import DeleteRoomButton from "@/components/DeleteRoomButton"
 
 export default async function AdminRoomsPage() {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") redirect("/rooms")
+  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
   const rooms = await prisma.room.findMany({
     orderBy: { name: "asc" },

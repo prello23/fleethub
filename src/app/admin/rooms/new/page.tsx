@@ -6,7 +6,7 @@ import RoomForm from "@/components/RoomForm"
 
 export default async function NewRoomPage() {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") redirect("/rooms")
+  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

@@ -7,7 +7,7 @@ import RoomForm from "@/components/RoomForm"
 
 export default async function EditRoomPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") redirect("/rooms")
+  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
   const { id } = await params
   const room = await prisma.room.findUnique({ where: { id } })

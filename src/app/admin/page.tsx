@@ -6,7 +6,7 @@ import { WashingMachine, Users, Plus, Settings } from "lucide-react"
 
 export default async function AdminPage() {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") redirect("/rooms")
+  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
   const [rooms, users, bookings] = await Promise.all([
     prisma.room.count(),

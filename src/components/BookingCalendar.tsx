@@ -59,11 +59,17 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
 
   const fetchBookings = useCallback(async () => {
     setLoading(true)
-    const from = weekStart.toISOString()
-    const to = new Date(weekEnd.getTime() + 86400000).toISOString()
-    const res = await fetch(`/api/bookings?roomId=${room.id}&from=${from}&to=${to}`)
-    const data = await res.json()
-    setBookings(data)
+    try {
+      const from = weekStart.toISOString()
+      const to = new Date(weekEnd.getTime() + 86400000).toISOString()
+      const res = await fetch(`/api/bookings?roomId=${room.id}&from=${from}&to=${to}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data)) setBookings(data)
+      }
+    } catch {
+      // network error — leave bookings as-is
+    }
     setLoading(false)
   }, [room.id, weekStart]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -105,19 +111,26 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   async function handleBook() {
     if (!confirmSlot) return
     setBooking(true)
-    const res = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        roomId: room.id,
-        machineType: activeTab,
-        machineNumber: confirmSlot.machine,
-        startTime: confirmSlot.date.toISOString(),
-      }),
-    })
-    if (res.ok) {
-      setConfirmSlot(null)
-      fetchBookings()
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: room.id,
+          machineType: activeTab,
+          machineNumber: confirmSlot.machine,
+          startTime: confirmSlot.date.toISOString(),
+        }),
+      })
+      if (res.ok) {
+        setConfirmSlot(null)
+        fetchBookings()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error === "Slot already booked" ? "Þessi tími er þegar bókaður" : "Villa við bókun")
+      }
+    } catch {
+      alert("Netvillu – reyndu aftur")
     }
     setBooking(false)
   }
