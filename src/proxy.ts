@@ -1,28 +1,10 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
+import NextAuth from "next-auth"
+import { authConfig } from "./auth.config"
 
-export async function proxy(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET })
-  const { pathname } = req.nextUrl
-  const role = token?.role as string | undefined
+const { auth } = NextAuth(authConfig)
 
-  if (pathname.startsWith("/superadmin")) {
-    if (role !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/rooms", req.url))
-    }
-  }
-
-  if (pathname.startsWith("/admin")) {
-    if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/rooms", req.url))
-    }
-  }
-
-  if (pathname.startsWith("/rooms") && !token) {
-    return NextResponse.redirect(new URL("/login", req.url))
-  }
-}
+// Next.js 16 proxy — must be a default export or named "proxy" export
+export default auth
 
 export const config = {
   matcher: ["/rooms/:path*", "/admin/:path*", "/superadmin/:path*"],
