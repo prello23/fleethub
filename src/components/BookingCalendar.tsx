@@ -334,7 +334,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                                 !isPast && (
                                   <button
                                     onClick={() => setConfirmSlot({ date: slotTime, machine })}
-                                    className="w-full rounded px-1.5 py-1 text-[10px] text-transparent hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
+                                    className="w-full rounded px-1.5 py-1 text-[10px] text-blue-500 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 border border-blue-100 hover:border-blue-300 transition-all"
                                   >
                                     Bóka
                                   </button>

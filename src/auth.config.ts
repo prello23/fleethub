@@ -35,5 +35,19 @@ export const authConfig = {
 
       return true
     },
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id as string
+        token.role = (user as { role?: string }).role ?? ""
+        token.apartment = (user as { apartment?: string | null }).apartment
+      }
+      return token
+    },
+    session({ session, token }) {
+      session.user.id = token.id as string
+      session.user.role = token.role as string
+      session.user.apartment = token.apartment as string | null | undefined
+      return session
+    },
   },
 } satisfies NextAuthConfig
