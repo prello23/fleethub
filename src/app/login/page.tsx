@@ -21,18 +21,23 @@ export default function LoginPage() {
     setLoading(true)
     setError("")
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    })
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
 
-    if (res?.error) {
-      setError("Rangt netfang eða lykilorð")
+      if (res?.error) {
+        setError("Rangt netfang eða lykilorð")
+        setLoading(false)
+      } else {
+        // Hard navigation so the server layout re-fetches the session cleanly
+        window.location.href = "/rooms"
+      }
+    } catch {
+      setError("Tengivist mistókst – reyndu aftur")
       setLoading(false)
-    } else {
-      // Hard navigation so the server layout re-fetches the session cleanly
-      window.location.href = "/rooms"
     }
   }
 

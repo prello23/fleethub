@@ -8,7 +8,9 @@
                 "start": "next start",
     "lint": "eslint",
     "db:seed": "npx tsx prisma/seed.ts",
-    "db:migrate": "npx prisma migrate dev"
+    "db:migrate": "npx prisma migrate dev",
+    "db:push": "npx prisma db push",
+    "db:setup": "npx prisma db push && npm run db:seed"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
