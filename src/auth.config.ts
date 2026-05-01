@@ -26,7 +26,7 @@ export const authConfig = {
         return true
       }
 
-      if (pathname.startsWith("/rooms")) {
+      if (pathname.startsWith("/rooms") || pathname === "/my-bookings" || pathname === "/profile") {
         if (!isLoggedIn) {
           return NextResponse.redirect(new URL("/login", nextUrl))
         }

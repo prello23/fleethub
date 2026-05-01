@@ -4,6 +4,13 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { WashingMachine, Waves, Clock, Settings, ArrowLeft } from "lucide-react"
 import BookingCalendar from "@/components/BookingCalendar"
+import type { Metadata } from "next"
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const room = await prisma.room.findUnique({ where: { id }, select: { name: true } })
+  return { title: room ? `${room.name} | Bókunarkerfi` : "Þvottahús | Bókunarkerfi" }
+}
 
 export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -12,6 +19,8 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   const { id } = await params
   const room = await prisma.room.findUnique({ where: { id } })
   if (!room) notFound()
+
+  const isAdminOrSuper = session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN"
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -23,7 +32,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
           <div className="flex items-center gap-2">
             <WashingMachine className="text-blue-600" size={22} />
             <h1 className="text-2xl font-bold text-gray-900">{room.name}</h1>
-            {session.user.role === "ADMIN" && (
+            {isAdminOrSuper && (
               <Link
                 href={`/admin/rooms/${room.id}`}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50"

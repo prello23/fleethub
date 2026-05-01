@@ -3,6 +3,9 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { WashingMachine, Users, Plus, Settings } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = { title: "Stjórnborð | Bókunarkerfi" }
 
 export default async function AdminPage() {
   const session = await auth()

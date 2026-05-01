@@ -3,12 +3,16 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { WashingMachine, Waves, Clock, ChevronRight } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = { title: "Þvottahús | Bókunarkerfi" }
 
 export default async function RoomsPage() {
   const session = await auth()
   if (!session) redirect("/login")
 
   const rooms = await prisma.room.findMany({ orderBy: { name: "asc" } })
+  const isAdminOrSuper = session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN"
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -21,7 +25,7 @@ export default async function RoomsPage() {
         <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
           <WashingMachine className="mx-auto text-gray-300 mb-3" size={48} />
           <p className="text-gray-500">Engin þvottahús skráð ennþá</p>
-          {session.user.role === "ADMIN" && (
+          {isAdminOrSuper && (
             <Link
               href="/admin/rooms/new"
               className="mt-4 inline-block bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800"

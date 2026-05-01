@@ -137,6 +137,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   }
 
   async function handleCancel(bookingId: string) {
+    if (!confirm("Ertu viss um að þú viljir afbóka þennan tíma?")) return
     await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" })
     fetchBookings()
   }

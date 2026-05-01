@@ -2,13 +2,25 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
-import { WashingMachine, LogOut, Settings, Home, Users, Crown } from "lucide-react"
-import { useState } from "react"
+import { WashingMachine, LogOut, Settings, Home, Users, Crown, Calendar, User } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 
 export default function Navigation() {
   const { data: session } = useSession()
   const [open, setOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const role = session?.user?.role
+
+  useEffect(() => {
+    if (!open) return
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [open])
 
   const navBg = role === "SUPER_ADMIN"
     ? "bg-gradient-to-r from-purple-800 to-indigo-800"
@@ -54,7 +66,7 @@ export default function Navigation() {
             </Link>
 
             {/* Avatar dropdown */}
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setOpen(!open)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
@@ -97,6 +109,14 @@ export default function Navigation() {
                       </Link>
                     </div>
                   )}
+                  <div className="border-b border-gray-100">
+                    <Link href="/my-bookings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
+                      <Calendar size={14} /> Mínar bókanir
+                    </Link>
+                    <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
+                      <User size={14} /> Prófíll
+                    </Link>
+                  </div>
                   <button
                     onClick={() => signOut({ callbackUrl: "/login" })}
                     className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-gray-50 text-red-600"
