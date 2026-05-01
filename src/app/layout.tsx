@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { SessionProvider } from "next-auth/react"
-import { auth } from "@/auth"
 import Navigation from "@/components/Navigation"
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration"
 
@@ -11,13 +10,11 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="is" className="h-full">
       <body className="min-h-full bg-gray-50 flex flex-col">
-        <SessionProvider session={session}>
+        <SessionProvider>
           <ServiceWorkerRegistration />
           <Navigation />
           <main className="flex-1">{children}</main>
