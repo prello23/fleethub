@@ -35,34 +35,32 @@ export default function Navigation() {
         </Link>
 
         {session ? (
-          <div className="flex items-center gap-4">
-            {/* Super Admin nav */}
+          <div className="flex items-center gap-1 sm:gap-4">
+            {/* Super Admin nav — desktop only */}
             {role === "SUPER_ADMIN" && (
               <>
-                <Link href="/superadmin" className="flex items-center gap-1 text-sm hover:opacity-80">
+                <Link href="/superadmin" className="hidden sm:flex items-center gap-1.5 text-sm hover:opacity-80 px-2 py-1.5 rounded-lg hover:bg-white/10">
                   <Crown size={16} />
-                  <span className="hidden sm:inline">Super Admin</span>
+                  Super Admin
                 </Link>
-                <Link href="/superadmin/admins" className="flex items-center gap-1 text-sm hover:opacity-80">
+                <Link href="/superadmin/admins" className="hidden sm:flex items-center gap-1.5 text-sm hover:opacity-80 px-2 py-1.5 rounded-lg hover:bg-white/10">
                   <Users size={16} />
-                  <span className="hidden sm:inline">Aðgangar</span>
+                  Aðgangar
                 </Link>
               </>
             )}
 
-            {/* Admin nav */}
+            {/* Admin nav — desktop only */}
             {(role === "ADMIN" || role === "SUPER_ADMIN") && (
-              <>
-                <Link href="/admin" className="flex items-center gap-1 text-sm hover:opacity-80">
-                  <Settings size={16} />
-                  <span className="hidden sm:inline">Stjórnun</span>
-                </Link>
-              </>
+              <Link href="/admin" className="hidden sm:flex items-center gap-1.5 text-sm hover:opacity-80 px-2 py-1.5 rounded-lg hover:bg-white/10">
+                <Settings size={16} />
+                Stjórnun
+              </Link>
             )}
 
-            <Link href="/rooms" className="flex items-center gap-1 text-sm hover:opacity-80">
+            <Link href="/rooms" className="hidden sm:flex items-center gap-1.5 text-sm hover:opacity-80 px-2 py-1.5 rounded-lg hover:bg-white/10">
               <Home size={16} />
-              <span className="hidden sm:inline">Þvottahús</span>
+              Þvottahús
             </Link>
 
             {/* Avatar dropdown */}
@@ -109,7 +107,18 @@ export default function Navigation() {
                       </Link>
                     </div>
                   )}
+                  {/* Admin links — mobile only (hidden on desktop where top-nav shows them) */}
+                  {(role === "ADMIN" || role === "SUPER_ADMIN") && (
+                    <div className="sm:hidden border-b border-gray-100">
+                      <Link href="/admin" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
+                        <Settings size={14} /> Stjórnun
+                      </Link>
+                    </div>
+                  )}
                   <div className="border-b border-gray-100">
+                    <Link href="/rooms" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
+                      <Home size={14} /> Þvottahús
+                    </Link>
                     <Link href="/my-bookings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
                       <Calendar size={14} /> Mínar bókanir
                     </Link>

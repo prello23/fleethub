@@ -35,10 +35,10 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
             {isAdminOrSuper && (
               <Link
                 href={`/admin/rooms/${room.id}`}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                className="p-2.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 touch-manipulation"
                 title="Breyta stillingum"
               >
-                <Settings size={16} />
+                <Settings size={18} />
               </Link>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, parseISO, isToday } from "date-fns"
 import { is } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, WashingMachine, Waves, X, Loader2, Bell } from "lucide-react"
@@ -54,6 +54,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
   const hasOneSignal = !!process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const weekEnd = addDays(weekStart, 6)
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
@@ -75,6 +76,17 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
   }, [room.id, weekStart]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchBookings() }, [fetchBookings])
+
+  // Auto-scroll so today's column is visible on mobile
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const todayIdx = days.findIndex((d) => isToday(d))
+    if (todayIdx < 0) return
+    // 8 grid columns (1 time + 7 days); scroll so today is the first visible day
+    const colW = el.scrollWidth / 8
+    el.scrollLeft = todayIdx * colW
+  }, [weekStart]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!hasOneSignal) return
@@ -235,7 +247,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" ref={scrollRef}>
             <div className="min-w-[640px]">
               {/* Day headers */}
               <div className="grid grid-cols-8 border-b border-gray-100">
