@@ -9,15 +9,16 @@ datasource db {
   
 
 model User {
-  id               String    @id @default(cuid())
+  id               String         @id @default(cuid())
   name             String
-  email            String    @unique
+  email            String         @unique
   password         String
-  role             String    @default("USER")
+  role             String         @default("USER")
   apartment        String?
   pushSubscription String?
-  createdAt        DateTime  @default(now())
+  createdAt        DateTime       @default(now())
   bookings         Booking[]
+  subscription     Subscription?
 }
 
 model Room {
@@ -29,6 +30,7 @@ model Room {
   slotDurationMinutes    Int       @default(60)
   notifyMinutesBefore    Int       @default(30)
   notifyMinutesBeforeEnd Int       @default(10)
+  ownerId                String?
   createdAt              DateTime  @default(now())
   bookings               Booking[]
 }
@@ -46,4 +48,30 @@ model Booking {
   createdAt     DateTime @default(now())
   room          Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  price         Float
+  currency      String         @default("ISK")
+  intervalDays  Int            @default(30)
+  maxRooms      Int            @default(1)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  planId    String
+  status    String    @default("ACTIVE")
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  notes     String?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      Plan      @relation(fields: [planId], references: [id])
 }

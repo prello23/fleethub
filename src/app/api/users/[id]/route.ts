@@ -2,14 +2,23 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
+function canManage(role: string) {
+  return role === "ADMIN" || role === "SUPER_ADMIN"
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !canManage(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
   const { id } = await params
   const body = await req.json()
+
+  // Only SUPER_ADMIN can assign SUPER_ADMIN role
+  if (body.role === "SUPER_ADMIN" && session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   const user = await prisma.user.update({
     where: { id },
@@ -25,11 +34,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !canManage(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
   const { id } = await params
+
+  // Protect SUPER_ADMIN accounts from being deleted by regular ADMIN
+  const target = await prisma.user.findUnique({ where: { id }, select: { role: true } })
+  if (target?.role === "SUPER_ADMIN" && session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   await prisma.user.delete({ where: { id } })
   return NextResponse.json({ ok: true })
 }

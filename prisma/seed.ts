@@ -8,6 +8,21 @@ const adapter = new PrismaBetterSqlite3({ url })
 const prisma = new PrismaClient({ adapter } as never)
 
 async function main() {
+  // Super Admin
+  const superAdminExists = await prisma.user.findUnique({ where: { email: "elvarpa@gmail.com" } })
+  if (!superAdminExists) {
+    await prisma.user.create({
+      data: {
+        name: "Elvar",
+        email: "elvarpa@gmail.com",
+        password: await bcrypt.hash("Valdisgunnar2312", 12),
+        role: "SUPER_ADMIN",
+      },
+    })
+    console.log("✓ Super Admin created: elvarpa@gmail.com")
+  }
+
+  // Admin
   const adminExists = await prisma.user.findUnique({ where: { email: "admin@laundry.local" } })
   if (!adminExists) {
     await prisma.user.create({
@@ -19,10 +34,43 @@ async function main() {
       },
     })
     console.log("✓ Admin created: admin@laundry.local / admin1234")
-  } else {
-    console.log("Admin already exists")
   }
 
+  // Default plans
+  const planCount = await prisma.plan.count()
+  if (planCount === 0) {
+    await prisma.plan.createMany({
+      data: [
+        {
+          name: "Grunnáskrift",
+          description: "1 þvottahús, allar grunneiginleikar",
+          price: 2990,
+          currency: "ISK",
+          intervalDays: 30,
+          maxRooms: 1,
+        },
+        {
+          name: "Meðaláskrift",
+          description: "Allt að 3 þvottahús",
+          price: 5990,
+          currency: "ISK",
+          intervalDays: 30,
+          maxRooms: 3,
+        },
+        {
+          name: "Stórfyrirtæki",
+          description: "Ótakmarkaður fjöldi þvottahúsa",
+          price: 12990,
+          currency: "ISK",
+          intervalDays: 30,
+          maxRooms: 999,
+        },
+      ],
+    })
+    console.log("✓ Created 3 default plans")
+  }
+
+  // Example rooms
   const roomCount = await prisma.room.count()
   if (roomCount === 0) {
     await prisma.room.createMany({
