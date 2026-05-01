@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth"
+import { NextResponse } from "next/server"
 
 // Lightweight auth config with no Prisma — safe to use in Edge (proxy)
 export const authConfig = {
@@ -11,17 +12,26 @@ export const authConfig = {
       const { pathname } = nextUrl
 
       if (pathname.startsWith("/superadmin")) {
-        if (role !== "SUPER_ADMIN") return Response.redirect(new URL("/rooms", nextUrl))
+        if (role !== "SUPER_ADMIN") {
+          return NextResponse.redirect(new URL("/rooms", nextUrl))
+        }
         return true
       }
+
       if (pathname.startsWith("/admin")) {
-        if (role !== "ADMIN" && role !== "SUPER_ADMIN") return Response.redirect(new URL("/rooms", nextUrl))
+        if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+          return NextResponse.redirect(new URL("/rooms", nextUrl))
+        }
         return true
       }
+
       if (pathname.startsWith("/rooms")) {
-        if (!isLoggedIn) return Response.redirect(new URL("/login", nextUrl))
+        if (!isLoggedIn) {
+          return NextResponse.redirect(new URL("/login", nextUrl))
+        }
         return true
       }
+
       return true
     },
   },
