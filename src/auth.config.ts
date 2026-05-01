@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 // Lightweight auth config with no Prisma — safe to use in Edge (proxy)
 export const authConfig = {
   providers: [],
+  trustHost: true,
   pages: { signIn: "/login" },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
