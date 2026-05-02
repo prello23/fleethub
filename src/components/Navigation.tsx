@@ -2,14 +2,16 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
-import { WashingMachine, LogOut, Settings, Home, Users, Crown, Calendar, User } from "lucide-react"
+import { WashingMachine, LogOut, Settings, Home, Users, Crown, Calendar, User, FileCheck } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
+import { useT } from "@/components/LanguageProvider"
 
 export default function Navigation() {
   const { data: session } = useSession()
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const role = session?.user?.role
+  const { lang, setLang, t } = useT()
 
   useEffect(() => {
     if (!open) return
@@ -31,7 +33,7 @@ export default function Navigation() {
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg hover:opacity-80">
           <WashingMachine size={24} />
-          <span className="hidden sm:inline">Laundry</span>
+          <span className="hidden sm:inline">{t("nav.laundry")}</span>
         </Link>
 
         {session ? (
@@ -52,14 +54,21 @@ export default function Navigation() {
             {(role === "ADMIN" || role === "SUPER_ADMIN") && (
               <Link href="/admin" className="hidden sm:flex items-center gap-1.5 text-sm hover:opacity-80 px-2 py-1.5 rounded-lg hover:bg-white/10">
                 <Settings size={16} />
-                Admin
+                {t("nav.admin")}
               </Link>
             )}
 
             <Link href="/rooms" className="hidden sm:flex items-center gap-1.5 text-sm hover:opacity-80 px-2 py-1.5 rounded-lg hover:bg-white/10">
               <Home size={16} />
-              Rooms
+              {t("nav.rooms")}
             </Link>
+
+            <button
+              onClick={() => setLang(lang === "en" ? "is" : "en")}
+              className="text-xs px-2 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-medium"
+            >
+              {lang === "en" ? "IS" : "EN"}
+            </button>
 
             <div className="relative" ref={dropdownRef}>
               <button
@@ -107,20 +116,28 @@ export default function Navigation() {
                   {(role === "ADMIN" || role === "SUPER_ADMIN") && (
                     <div className="sm:hidden border-b border-gray-100">
                       <Link href="/admin" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
-                        <Settings size={14} /> Admin panel
+                        <Settings size={14} /> {t("nav.admin")}
+                      </Link>
+                    </div>
+                  )}
+
+                  {(role === "ADMIN" || role === "SUPER_ADMIN") && (
+                    <div className="border-b border-gray-100">
+                      <Link href="/admin/access-requests" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
+                        <FileCheck size={14} /> {t("access.requests")}
                       </Link>
                     </div>
                   )}
 
                   <div className="border-b border-gray-100">
                     <Link href="/rooms" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
-                      <Home size={14} /> Laundry rooms
+                      <Home size={14} /> {t("nav.rooms")}
                     </Link>
                     <Link href="/my-bookings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
-                      <Calendar size={14} /> My bookings
+                      <Calendar size={14} /> {t("nav.myBookings")}
                     </Link>
                     <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700">
-                      <User size={14} /> Profile
+                      <User size={14} /> {t("nav.profile")}
                     </Link>
                   </div>
                   <button
@@ -128,7 +145,7 @@ export default function Navigation() {
                     className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-gray-50 text-red-600"
                   >
                     <LogOut size={16} />
-                    Sign out
+                    {t("nav.signOut")}
                   </button>
                 </div>
               )}
@@ -136,9 +153,15 @@ export default function Navigation() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm hover:opacity-80">Sign in</Link>
+            <button
+              onClick={() => setLang(lang === "en" ? "is" : "en")}
+              className="text-xs px-2 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-medium"
+            >
+              {lang === "en" ? "IS" : "EN"}
+            </button>
+            <Link href="/login" className="text-sm hover:opacity-80">{t("nav.signIn")}</Link>
             <Link href="/register" className="bg-white text-blue-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-50">
-              Register
+              {t("nav.register")}
             </Link>
           </div>
         )}

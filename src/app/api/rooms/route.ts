@@ -37,6 +37,9 @@ export async function POST(req: Request) {
     data: {
       name: body.name,
       description: body.description ?? null,
+      address: body.address ?? null,
+      latitude: body.latitude ?? null,
+      longitude: body.longitude ?? null,
       washingMachines: body.washingMachines ?? 2,
       dryers: body.dryers ?? 1,
       slotDurationMinutes: body.slotDurationMinutes ?? 60,

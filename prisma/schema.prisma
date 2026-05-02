@@ -8,35 +8,40 @@ datasource db {
 }
 
 model User {
-  id               String         @id @default(cuid())
+  id               String          @id @default(cuid())
   name             String
-  email            String         @unique
+  email            String          @unique
   password         String
-  role             String         @default("USER")
+  role             String          @default("USER")
   apartment        String?
   pushSubscription String?
-  createdAt        DateTime       @default(now())
+  createdAt        DateTime        @default(now())
   bookings         Booking[]
   subscription     Subscription?
   rooms            UserRoom[]
   charges          Charge[]
+  accessRequests   AccessRequest[]
 }
 
 model Room {
-  id                     String     @id @default(cuid())
+  id                     String          @id @default(cuid())
   name                   String
   description            String?
-  washingMachines        Int        @default(2)
-  dryers                 Int        @default(1)
-  slotDurationMinutes    Int        @default(60)
-  notifyMinutesBefore    Int        @default(30)
-  notifyMinutesBeforeEnd Int        @default(10)
-  pricePerSlot           Float      @default(0)
+  address                String?
+  latitude               Float?
+  longitude              Float?
+  washingMachines        Int             @default(2)
+  dryers                 Int             @default(1)
+  slotDurationMinutes    Int             @default(60)
+  notifyMinutesBefore    Int             @default(30)
+  notifyMinutesBeforeEnd Int             @default(10)
+  pricePerSlot           Float           @default(0)
   ownerId                String?
-  createdAt              DateTime   @default(now())
+  createdAt              DateTime        @default(now())
   bookings               Booking[]
   users                  UserRoom[]
   charges                Charge[]
+  accessRequests         AccessRequest[]
 }
 
 model UserRoom {
@@ -103,4 +108,17 @@ model Subscription {
   createdAt DateTime  @default(now())
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan      Plan      @relation(fields: [planId], references: [id])
+}
+
+model AccessRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  roomId    String
+  status    String   @default("PENDING")
+  message   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
 }

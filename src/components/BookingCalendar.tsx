@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, isToday, isPast, startOfDay } from "date-fns"
 import { enUS } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, WashingMachine, Waves, X, Loader2, Bell } from "lucide-react"
+import { useT } from "@/components/LanguageProvider"
 
 type Room = {
   id: string
@@ -45,6 +46,7 @@ function generateSlots(date: Date, slotMinutes: number): Date[] {
 }
 
 export default function BookingCalendar({ room, currentUserId, currentUserName }: Props) {
+  const { t } = useT()
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [bookings, setBookings] = useState<Booking[]>([])
   const [activeTab, setActiveTab] = useState<"WASHER" | "DRYER">("WASHER")
@@ -185,7 +187,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
             }`}
           >
             <WashingMachine size={15} />
-            Washers ({room.washingMachines})
+            {t("room.washer")}s ({room.washingMachines})
           </button>
           <button
             onClick={() => setActiveTab("DRYER")}
@@ -194,7 +196,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
             }`}
           >
             <Waves size={15} />
-            Dryers ({room.dryers})
+            {t("room.dryer")}s ({room.dryers})
           </button>
         </div>
 
@@ -209,7 +211,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
             }`}
           >
             {pushLoading ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
-            {pushEnabled ? "Notifications on" : "Enable notifications"}
+            {pushEnabled ? t("booking.notificationsOn") : t("booking.notifications")}
           </button>
         )}
       </div>
@@ -261,7 +263,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                       <Waves size={12} className="text-teal-500" />
                     )}
                     <span className="text-xs font-semibold text-gray-600">
-                      {activeTab === "WASHER" ? "Washer" : "Dryer"} {machine}
+                      {activeTab === "WASHER" ? t("room.washer") : t("room.dryer")} {machine}
                     </span>
                   </div>
 
@@ -294,7 +296,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                                   isOwn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
                                 }`}>
                                   <span className="truncate text-[10px]">
-                                    {isOwn ? "Mine" : existingBooking.user.apartment || existingBooking.user.name}
+                                    {isOwn ? t("booking.mine") : existingBooking.user.apartment || existingBooking.user.name}
                                   </span>
                                   {isOwn && !isSlotPast && (
                                     <button onClick={() => handleCancel(existingBooking.id)} className="flex-shrink-0 hover:opacity-70">
@@ -308,7 +310,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                                     onClick={() => setConfirmSlot({ date: slotTime, machine })}
                                     className="w-full rounded px-1.5 py-1 text-[10px] text-blue-500 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 border border-blue-100 hover:border-blue-300 transition-all"
                                   >
-                                    Book
+                                    {t("booking.book")}
                                   </button>
                                 )
                               )}
@@ -329,12 +331,12 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
       {confirmSlot && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Confirm booking</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{t("booking.confirm")}</h3>
             <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1.5 mb-5">
               <p><span className="text-gray-500">Room:</span> <strong>{room.name}</strong></p>
               <p>
                 <span className="text-gray-500">Machine:</span>{" "}
-                <strong>{activeTab === "WASHER" ? "Washer" : "Dryer"} {confirmSlot.machine}</strong>
+                <strong>{activeTab === "WASHER" ? t("room.washer") : t("room.dryer")} {confirmSlot.machine}</strong>
               </p>
               <p>
                 <span className="text-gray-500">Date:</span>{" "}
@@ -356,7 +358,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                 disabled={booking}
                 className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50"
               >
-                Cancel
+                {t("booking.cancel")}
               </button>
               <button
                 onClick={handleBook}
@@ -364,7 +366,7 @@ export default function BookingCalendar({ room, currentUserId, currentUserName }
                 className="flex-1 bg-blue-700 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800 disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {booking && <Loader2 size={14} className="animate-spin" />}
-                Book slot
+                {t("booking.bookSlot")}
               </button>
             </div>
           </div>

@@ -8,6 +8,9 @@ type Room = {
   id?: string
   name: string
   description: string
+  address: string
+  latitude: number | null
+  longitude: number | null
   washingMachines: number
   dryers: number
   slotDurationMinutes: number
@@ -22,6 +25,9 @@ export default function RoomForm({ initial }: { initial?: Room }) {
     initial ?? {
       name: "",
       description: "",
+      address: "",
+      latitude: null,
+      longitude: null,
       washingMachines: 2,
       dryers: 1,
       slotDurationMinutes: 60,
@@ -160,6 +166,47 @@ export default function RoomForm({ initial }: { initial?: Room }) {
               className="w-32 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-500">ISK</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+        <h2 className="font-semibold text-gray-800">Location</h2>
+        <p className="text-sm text-gray-500">Coordinates are used to show the room on the map</p>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <input
+            type="text"
+            value={form.address}
+            onChange={(e) => set("address", e.target.value)}
+            placeholder="e.g. 123 Main Street, Reykjavik"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+            <input
+              type="number"
+              step={0.0001}
+              value={form.latitude ?? ""}
+              onChange={(e) => set("latitude", e.target.value ? parseFloat(e.target.value) : null)}
+              placeholder="e.g. 64.1355"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+            <input
+              type="number"
+              step={0.0001}
+              value={form.longitude ?? ""}
+              onChange={(e) => set("longitude", e.target.value ? parseFloat(e.target.value) : null)}
+              placeholder="e.g. -21.8954"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       </div>

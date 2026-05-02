@@ -22,6 +22,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     data: {
       name: body.name,
       description: body.description ?? null,
+      address: body.address ?? null,
+      latitude: body.latitude ?? null,
+      longitude: body.longitude ?? null,
       washingMachines: body.washingMachines,
       dryers: body.dryers,
       slotDurationMinutes: body.slotDurationMinutes,

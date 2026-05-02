@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { WashingMachine, Users, Plus, Settings, Receipt } from "lucide-react"
+import { WashingMachine, Users, Plus, Settings, Receipt, FileCheck } from "lucide-react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = { title: "Admin Panel | Booking System" }
@@ -13,13 +13,19 @@ export default async function AdminPage() {
 
   const isAdmin = session.user.role === "ADMIN"
 
-  const [roomCount, userCount, bookingCount, pendingCharges] = await Promise.all([
+  const [roomCount, userCount, bookingCount, pendingCharges, pendingRequests] = await Promise.all([
     isAdmin
       ? prisma.room.count({ where: { ownerId: session.user.id } })
       : prisma.room.count(),
     prisma.user.count(),
     prisma.booking.count({ where: { startTime: { gte: new Date() } } }),
     prisma.charge.count({ where: { status: "PENDING", ...(isAdmin ? { room: { ownerId: session.user.id } } : {}) } }),
+    prisma.accessRequest.count({
+      where: {
+        status: "PENDING",
+        ...(isAdmin ? { room: { ownerId: session.user.id } } : {}),
+      },
+    }),
   ])
 
   return (
@@ -29,7 +35,7 @@ export default async function AdminPage() {
         <p className="text-gray-500 text-sm mt-1">Laundry booking management</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <p className="text-sm text-gray-500">Rooms</p>
           <p className="text-3xl font-bold text-blue-700 mt-1">{roomCount}</p>
@@ -45,6 +51,10 @@ export default async function AdminPage() {
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <p className="text-sm text-gray-500">Pending charges</p>
           <p className="text-3xl font-bold text-amber-600 mt-1">{pendingCharges}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <p className="text-sm text-gray-500">Access requests</p>
+          <p className="text-3xl font-bold text-blue-600 mt-1">{pendingRequests}</p>
         </div>
       </div>
 
@@ -85,6 +95,24 @@ export default async function AdminPage() {
           <p className="text-sm text-gray-500">Track slot charges per resident and mark payments.</p>
           <span className="mt-4 inline-flex items-center gap-1 text-sm text-amber-600 font-medium group-hover:gap-2 transition-all">
             <Receipt size={14} /> View charges
+          </span>
+        </Link>
+
+        <Link href="/admin/access-requests" className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-blue-200 transition-all group">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <FileCheck className="text-blue-700" size={20} />
+            </div>
+            <h2 className="font-semibold text-gray-900">Access Requests</h2>
+            {pendingRequests > 0 && (
+              <span className="ml-auto bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {pendingRequests}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-500">Review and approve user requests for room access.</p>
+          <span className="mt-4 inline-flex items-center gap-1 text-sm text-blue-600 font-medium group-hover:gap-2 transition-all">
+            <FileCheck size={14} /> Review requests
           </span>
         </Link>
 

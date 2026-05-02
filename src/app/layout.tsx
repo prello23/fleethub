@@ -3,15 +3,18 @@ import "./globals.css"
 import { SessionProvider } from "next-auth/react"
 import Navigation from "@/components/Navigation"
 import OneSignalInit from "@/components/OneSignalInit"
+import { LanguageProvider } from "@/components/LanguageProvider"
+import type { Lang } from "@/lib/i18n"
+import { cookies } from "next/headers"
 
 export const metadata: Metadata = {
-  title: "Þvottahús – Bókunarkerfi",
-  description: "Bókuðu þvottavél og þurrkara í þínu þvottahúsi",
+  title: "Laundry – Booking System",
+  description: "Book laundry machines in your building",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Þvottahús",
+    title: "Laundry",
   },
   icons: {
     icon: "/icon.svg",
@@ -25,17 +28,21 @@ export const viewport: Viewport = {
 
 const APP_VERSION = process.env.APP_VERSION ?? "1.0.0"
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const lang: Lang = (await cookies()).get("lang")?.value === "is" ? "is" : "en"
+
   return (
-    <html lang="is" className="h-full">
+    <html lang={lang} className="h-full">
       <body className="min-h-full bg-gray-50 flex flex-col">
         <SessionProvider>
-          <OneSignalInit />
-          <Navigation />
-          <main className="flex-1">{children}</main>
-          <footer className="text-center text-xs text-gray-400 py-4">
-            Þvottahús bókunarkerfi &mdash; v{APP_VERSION}
-          </footer>
+          <LanguageProvider initialLang={lang}>
+            <OneSignalInit />
+            <Navigation />
+            <main className="flex-1">{children}</main>
+            <footer className="text-center text-xs text-gray-400 py-4">
+              Laundry booking system &mdash; v{APP_VERSION}
+            </footer>
+          </LanguageProvider>
         </SessionProvider>
       </body>
     </html>
