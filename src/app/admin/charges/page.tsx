@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getServerT } from "@/lib/server-i18n"
 import { Receipt } from "lucide-react"
 import ChargesTable from "@/components/ChargesTable"
 import type { Metadata } from "next"
@@ -11,6 +12,7 @@ export default async function AdminChargesPage() {
   const session = await auth()
   if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
+  const { t } = await getServerT()
   const isAdmin = session.user.role === "ADMIN"
   const charges = await prisma.charge.findMany({
     where: isAdmin ? { room: { ownerId: session.user.id } } : {},
@@ -32,22 +34,22 @@ export default async function AdminChargesPage() {
           <Receipt className="text-amber-700" size={20} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Charges</h1>
-          <p className="text-gray-500 text-sm">{charges.length} total charge{charges.length !== 1 ? "s" : ""}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("admin.charges")}</h1>
+          <p className="text-gray-500 text-sm">{charges.length} {t("admin.charges").toLowerCase()}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">Pending</p>
+          <p className="text-sm text-gray-500">{t("access.pending")}</p>
           <p className="text-2xl font-bold text-amber-600 mt-1">{pending.toLocaleString()} ISK</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">Collected</p>
+          <p className="text-sm text-gray-500">{t("admin.collected")}</p>
           <p className="text-2xl font-bold text-green-600 mt-1">{paid.toLocaleString()} ISK</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-sm text-gray-500">{t("admin.total")}</p>
           <p className="text-2xl font-bold text-gray-800 mt-1">{(pending + paid).toLocaleString()} ISK</p>
         </div>
       </div>

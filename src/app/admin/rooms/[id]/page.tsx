@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import RoomForm from "@/components/RoomForm"
@@ -18,6 +19,7 @@ export default async function EditRoomPage({ params }: { params: Promise<{ id: s
   const session = await auth()
   if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
+  const { t } = await getServerT()
   const { id } = await params
   const [room, assignedUsers, allUsers] = await Promise.all([
     prisma.room.findUnique({ where: { id } }),
@@ -47,7 +49,7 @@ export default async function EditRoomPage({ params }: { params: Promise<{ id: s
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edit room</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("admin.editRoomTitle")}</h1>
           <p className="text-gray-500 text-sm">{room.name}</p>
         </div>
       </div>

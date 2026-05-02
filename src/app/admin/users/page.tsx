@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getServerT } from "@/lib/server-i18n"
 import { Users } from "lucide-react"
 import UserTable from "@/components/UserTable"
 import CreateUserForm from "@/components/CreateUserForm"
@@ -12,9 +13,9 @@ export default async function AdminUsersPage() {
   const session = await auth()
   if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
+  const { t } = await getServerT()
   const isAdmin = session.user.role === "ADMIN"
 
-  // Admin sees only users in their rooms; super admin sees all
   let users
   if (isAdmin) {
     const adminRooms = await prisma.room.findMany({
@@ -53,8 +54,8 @@ export default async function AdminUsersPage() {
           <Users className="text-purple-700" size={20} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-          <p className="text-gray-500 text-sm">{users.length} registered user{users.length !== 1 ? "s" : ""}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("admin.users")}</h1>
+          <p className="text-gray-500 text-sm">{users.length} {t("admin.users").toLowerCase()}</p>
         </div>
       </div>
 

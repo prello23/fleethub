@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { ArrowLeft, User } from "lucide-react"
 import ProfileForm from "@/components/ProfileForm"
@@ -14,6 +15,8 @@ export const metadata: Metadata = { title: "Profile | Laundry" }
 export default async function ProfilePage() {
   const session = await auth()
   if (!session) redirect("/login")
+
+  const { t } = await getServerT()
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -30,9 +33,9 @@ export default async function ProfilePage() {
         <div>
           <div className="flex items-center gap-2">
             <User size={20} className="text-gray-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("nav.profile")}</h1>
           </div>
-          <p className="text-gray-500 text-sm mt-0.5">Manage your account settings</p>
+          <p className="text-gray-500 text-sm mt-0.5">{t("profile.subtitle")}</p>
         </div>
       </div>
 

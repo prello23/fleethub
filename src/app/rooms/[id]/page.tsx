@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { WashingMachine, Waves, Clock, Settings, ArrowLeft } from "lucide-react"
 import BookingCalendar from "@/components/BookingCalendar"
@@ -16,6 +17,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   const session = await auth()
   if (!session) redirect("/login")
 
+  const { t } = await getServerT()
   const { id } = await params
   const room = await prisma.room.findUnique({ where: { id } })
   if (!room) notFound()
@@ -51,15 +53,15 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-4 py-2.5 text-sm">
           <WashingMachine size={16} className="text-blue-500" />
-          <span className="text-gray-600">{room.washingMachines} washing machines</span>
+          <span className="text-gray-600">{room.washingMachines} {t("room.washingMachines")}</span>
         </div>
         <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-4 py-2.5 text-sm">
           <Waves size={16} className="text-teal-500" />
-          <span className="text-gray-600">{room.dryers} dryers</span>
+          <span className="text-gray-600">{room.dryers} {t("room.dryers")}</span>
         </div>
         <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-4 py-2.5 text-sm">
           <Clock size={16} className="text-gray-400" />
-          <span className="text-gray-600">{room.slotDurationMinutes} min slots</span>
+          <span className="text-gray-600">{room.slotDurationMinutes} {t("room.slots")}</span>
         </div>
       </div>
 

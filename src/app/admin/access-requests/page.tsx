@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getServerT } from "@/lib/server-i18n"
 import AccessRequestsManager from "@/components/AccessRequestsManager"
 import type { Metadata } from "next"
 
@@ -12,6 +13,7 @@ export default async function AccessRequestsPage() {
     redirect("/rooms")
   }
 
+  const { t } = await getServerT()
   const isAdmin = session.user.role === "ADMIN"
 
   const requests = await prisma.accessRequest.findMany({
@@ -25,7 +27,6 @@ export default async function AccessRequestsPage() {
     orderBy: { createdAt: "desc" },
   })
 
-  // Convert Date objects for serialization
   const serialized = requests.map((r) => ({
     ...r,
     createdAt: r.createdAt,
@@ -34,8 +35,8 @@ export default async function AccessRequestsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Access Requests</h1>
-        <p className="text-gray-500 text-sm mt-1">Approve or deny user access requests to laundry rooms</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("access.requests")}</h1>
+        <p className="text-gray-500 text-sm mt-1">{t("admin.accessRequestsSubtitle")}</p>
       </div>
 
       <AccessRequestsManager requests={serialized} />

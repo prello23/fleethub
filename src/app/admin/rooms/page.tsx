@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { WashingMachine, Plus, Pencil, Clock, Waves } from "lucide-react"
 import DeleteRoomButton from "@/components/DeleteRoomButton"
@@ -12,6 +13,7 @@ export default async function AdminRoomsPage() {
   const session = await auth()
   if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) redirect("/rooms")
 
+  const { t } = await getServerT()
   const isAdmin = session.user.role === "ADMIN"
   const rooms = await prisma.room.findMany({
     where: isAdmin ? { ownerId: session.user.id } : undefined,
@@ -23,21 +25,21 @@ export default async function AdminRoomsPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Laundry Rooms</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your rooms</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("rooms.title")}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t("admin.manageRoomsSubtitle")}</p>
         </div>
         <Link href="/admin/rooms/new" className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800">
           <Plus size={16} />
-          New room
+          {t("admin.newRoom")}
         </Link>
       </div>
 
       {rooms.length === 0 ? (
         <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
           <WashingMachine className="mx-auto text-gray-300 mb-3" size={48} />
-          <p className="text-gray-500 mb-4">No laundry rooms yet</p>
+          <p className="text-gray-500 mb-4">{t("admin.noRoomsYet")}</p>
           <Link href="/admin/rooms/new" className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800">
-            Add laundry room
+            {t("rooms.addRoom")}
           </Link>
         </div>
       ) : (
@@ -54,20 +56,20 @@ export default async function AdminRoomsPage() {
                   <p className="text-xs text-gray-400 mt-0.5 truncate">{room.description}</p>
                 )}
                 <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-gray-500">
-                  <span className="flex items-center gap-1"><WashingMachine size={11} className="text-blue-400" />{room.washingMachines} washers</span>
-                  <span className="flex items-center gap-1"><Waves size={11} className="text-teal-400" />{room.dryers} dryers</span>
-                  <span className="flex items-center gap-1"><Clock size={11} />{room.slotDurationMinutes} min</span>
-                  <span className="text-gray-400">{room._count.users} residents · {room._count.bookings} bookings</span>
+                  <span className="flex items-center gap-1"><WashingMachine size={11} className="text-blue-400" />{room.washingMachines} {t("room.washers")}</span>
+                  <span className="flex items-center gap-1"><Waves size={11} className="text-teal-400" />{room.dryers} {t("room.dryers")}</span>
+                  <span className="flex items-center gap-1"><Clock size={11} />{room.slotDurationMinutes} {t("room.slots")}</span>
+                  <span className="text-gray-400">{room._count.users} {t("admin.residents")} · {room._count.bookings} {t("admin.bookingsLabel")}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Link href={`/rooms/${room.id}`} className="text-xs text-gray-500 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 border border-gray-200">
-                  View
+                  {t("admin.viewRoom")}
                 </Link>
                 <Link href={`/admin/rooms/${room.id}`} className="flex items-center gap-1.5 text-xs text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50 border border-gray-200">
                   <Pencil size={12} />
-                  Edit
+                  {t("admin.editRoom")}
                 </Link>
                 <DeleteRoomButton roomId={room.id} roomName={room.name} />
               </div>
