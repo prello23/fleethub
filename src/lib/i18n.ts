@@ -53,6 +53,11 @@ export const dict = {
     "access.denied2": "Denied",
     "access.pending": "Pending",
     "access.noRequests": "No pending access requests",
+    "update.available": "Update available",
+    "update.button": "Update now",
+    "update.check": "Check for updates",
+    "update.checking": "Checking…",
+    "update.upToDate": "You're up to date",
   },
   is: {
     "nav.rooms": "Þvottahús",
@@ -106,6 +111,11 @@ export const dict = {
     "access.denied2": "Hafnað",
     "access.pending": "Í bið",
     "access.noRequests": "Engar beiðnir í bið",
+    "update.available": "Update available",
+    "update.button": "Update now",
+    "update.check": "Check for updates",
+    "update.checking": "Checking…",
+    "update.upToDate": "You're up to date",
   },
 } as const
 

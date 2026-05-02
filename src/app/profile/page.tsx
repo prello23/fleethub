@@ -4,7 +4,10 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { ArrowLeft, User } from "lucide-react"
 import ProfileForm from "@/components/ProfileForm"
+import CheckForUpdates from "@/components/CheckForUpdates"
 import type { Metadata } from "next"
+
+const APP_VERSION = process.env.APP_VERSION ?? "1.0.0"
 
 export const metadata: Metadata = { title: "Profile | Laundry" }
 
@@ -34,6 +37,9 @@ export default async function ProfilePage() {
       </div>
 
       <ProfileForm user={user} />
+      <div className="mt-6">
+        <CheckForUpdates currentVersion={APP_VERSION} />
+      </div>
     </div>
   )
 }

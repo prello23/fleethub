@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react"
 import Navigation from "@/components/Navigation"
 import OneSignalInit from "@/components/OneSignalInit"
 import { LanguageProvider } from "@/components/LanguageProvider"
+import UpdateBanner from "@/components/UpdateBanner"
 import type { Lang } from "@/lib/i18n"
 import { cookies } from "next/headers"
 
@@ -42,6 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <footer className="text-center text-xs text-gray-400 py-4">
               Laundry booking system &mdash; v{APP_VERSION}
             </footer>
+            <UpdateBanner initialVersion={APP_VERSION} />
           </LanguageProvider>
         </SessionProvider>
       </body>
