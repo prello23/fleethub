@@ -21,6 +21,7 @@ export default function UpdateBanner({ initialVersion }: { initialVersion: strin
       }
     }
 
+    check() // check immediately on mount
     const interval = setInterval(check, 5 * 60 * 1000)
     return () => clearInterval(interval)
   }, [initialVersion])

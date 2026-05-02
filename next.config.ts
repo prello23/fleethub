@@ -2,13 +2,14 @@ import type { NextConfig } from "next"
 import { execSync } from "child_process"
 
 function getBuildVersion() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pkg = require("./package.json") as { version: string }
+  // Always include a build timestamp so the version changes on every build,
+  // even when the git hash hasn't changed (e.g. re-deploying the same commit).
+  const ts = new Date().toISOString().slice(0, 16).replace("T", "_")
   try {
     const hash = execSync("git rev-parse --short HEAD").toString().trim()
-    return `${pkg.version} (${hash})`
+    return `${hash}-${ts}`
   } catch {
-    return pkg.version
+    return ts
   }
 }
 
