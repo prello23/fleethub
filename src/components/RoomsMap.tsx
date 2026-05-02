@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useT } from "@/components/LanguageProvider"
 
 type MapRoom = {
   id: string
@@ -35,6 +36,7 @@ type LeafletMarker = {
 }
 
 export default function RoomsMap({ rooms }: Props) {
+  const { t } = useT()
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<LeafletMap | null>(null)
   const initializedRef = useRef(false)
@@ -112,7 +114,7 @@ export default function RoomsMap({ rooms }: Props) {
   if (geoRooms.length === 0) {
     return (
       <div className="h-80 rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 text-sm">
-        No rooms with location data
+        {t("rooms.noLocationData")}
       </div>
     )
   }
