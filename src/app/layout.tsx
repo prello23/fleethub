@@ -38,12 +38,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProvider>
           <LanguageProvider initialLang={lang}>
             <OneSignalInit />
+            <UpdateBanner initialVersion={APP_VERSION} />
             <Navigation />
             <main className="flex-1">{children}</main>
             <footer className="text-center text-xs text-gray-400 py-4">
               Laundry booking system &mdash; v{APP_VERSION}
             </footer>
-            <UpdateBanner initialVersion={APP_VERSION} />
           </LanguageProvider>
         </SessionProvider>
       </body>
