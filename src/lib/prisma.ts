@@ -1,11 +1,15 @@
 import { PrismaClient } from "../generated/prisma/client"
-import { PrismaLibSql } from "@prisma/adapter-libsql"
+import { PrismaBetterSQLite3 } from "@prisma/adapter-better-sqlite3"
+import Database from "better-sqlite3"
 
 function createPrismaClient() {
   const url = process.env.DATABASE_URL ?? "file:./dev.db"
-  console.log("[Prisma] init. node:", process.version, "url:", url)
+  // Convert file: URL to actual path
+  const dbPath = url.startsWith("file:") ? url.slice(5) : url
+  console.log("[Prisma] init. node:", process.version, "path:", dbPath)
   try {
-    const adapter = new PrismaLibSql({ url })
+    const db = new Database(dbPath)
+    const adapter = new PrismaBetterSQLite3(db)
     return new PrismaClient({ adapter } as never)
   } catch (err) {
     console.error("[Prisma] FAILED:", err)
