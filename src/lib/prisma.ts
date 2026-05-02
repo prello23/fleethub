@@ -2,10 +2,15 @@ import { PrismaClient } from "../generated/prisma/client"
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
 
 function createClient() {
-  // DATABASE_URL is "file:./dev.db" (relative to project root)
   const url = process.env.DATABASE_URL ?? "file:./dev.db"
-  const adapter = new PrismaBetterSqlite3({ url })
-  return new PrismaClient({ adapter } as never)
+  console.log("[Prisma] init. node:", process.version, "url:", url)
+  try {
+    const adapter = new PrismaBetterSqlite3({ url })
+    return new PrismaClient({ adapter } as never)
+  } catch (err) {
+    console.error("[Prisma] FAILED:", err)
+    throw err
+  }
 }
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
