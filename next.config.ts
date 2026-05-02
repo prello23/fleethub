@@ -15,7 +15,7 @@ function getBuildVersion() {
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["@libsql/client"],
   env: {
     APP_VERSION: getBuildVersion(),
   },
