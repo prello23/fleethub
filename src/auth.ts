@@ -1,8 +1,23 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
-import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { authConfig } from "./auth.config"
+import Database from "better-sqlite3"
+
+// Use direct SQLite (better-sqlite3) for auth to avoid Prisma adapter issues in production
+function getUserByEmail(email: string): { id: string; name: string; email: string; password: string; role: string; apartment: string | null } | null {
+  try {
+    const url = process.env["DATABASE_URL"] ?? "file:./dev.db"
+    const dbPath = url.startsWith("file:") ? url.slice(5) : url
+    const db = new Database(dbPath)
+    const user = db.prepare("SELECT id, name, email, password, role, apartment FROM User WHERE email = ?").get(email) as { id: string; name: string; email: string; password: string; role: string; apartment: string | null } | undefined
+    db.close()
+    return user ?? null
+  } catch (err) {
+    console.error("[auth] getUserByEmail error:", err)
+    return null
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -15,9 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        })
+        const user = getUserByEmail(credentials.email as string)
 
         if (!user) return null
 
