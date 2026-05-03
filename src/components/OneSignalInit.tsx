@@ -25,17 +25,24 @@ declare global {
 const APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID
 
 export default function OneSignalInit() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    if (!APP_ID) return
+    // Only initialise and prompt after the user is authenticated
+    if (status !== "authenticated" || !APP_ID || !session?.user) return
+
+    const userId = session.user.id
+    const email = session.user.email ?? undefined
 
     window.OneSignalDeferred = window.OneSignalDeferred ?? []
+
     window.OneSignalDeferred.push(async (os) => {
       await os.init({
         appId: APP_ID,
         serviceWorkerPath: "/OneSignalSDKWorker.js",
       })
+      await os.login(userId)
+      if (email) os.User.addEmail(email)
     })
 
     const script = document.createElement("script")
@@ -44,22 +51,9 @@ export default function OneSignalInit() {
     document.head.appendChild(script)
 
     return () => {
-      document.head.removeChild(script)
+      if (document.head.contains(script)) document.head.removeChild(script)
     }
-  }, [])
-
-  // Link logged-in user to OneSignal external_id + email
-  useEffect(() => {
-    if (!APP_ID || !session?.user) return
-    const userId = session.user.id
-    const email = session.user.email ?? undefined
-
-    window.OneSignalDeferred = window.OneSignalDeferred ?? []
-    window.OneSignalDeferred.push(async (os) => {
-      await os.login(userId)
-      if (email) os.User.addEmail(email)
-    })
-  }, [session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
 }
