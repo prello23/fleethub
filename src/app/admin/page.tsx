@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { WashingMachine, Users, Plus, Settings, Receipt, FileCheck } from "lucide-react"
@@ -14,21 +14,31 @@ export default async function AdminPage() {
 
   const { t } = await getServerT()
   const isAdmin = session.user.role === "ADMIN"
+  const userId = session.user.id
 
-  const [roomCount, userCount, bookingCount, pendingCharges, pendingRequests] = await Promise.all([
-    isAdmin
-      ? prisma.room.count({ where: { ownerId: session.user.id } })
-      : prisma.room.count(),
-    prisma.user.count(),
-    prisma.booking.count({ where: { startTime: { gte: new Date() } } }),
-    prisma.charge.count({ where: { status: "PENDING", ...(isAdmin ? { room: { ownerId: session.user.id } } : {}) } }),
-    prisma.accessRequest.count({
-      where: {
-        status: "PENDING",
-        ...(isAdmin ? { room: { ownerId: session.user.id } } : {}),
-      },
-    }),
-  ])
+  const now = new Date().toISOString()
+
+  const roomCount = isAdmin
+    ? (db.prepare(`SELECT COUNT(*) as c FROM "Room" WHERE ownerId = ?`).get(userId) as { c: number }).c
+    : (db.prepare(`SELECT COUNT(*) as c FROM "Room"`).get() as { c: number }).c
+
+  const userCount = (db.prepare(`SELECT COUNT(*) as c FROM "User"`).get() as { c: number }).c
+
+  const bookingCount = (db.prepare(
+    `SELECT COUNT(*) as c FROM "Booking" WHERE startTime >= ?`
+  ).get(now) as { c: number }).c
+
+  const pendingCharges = isAdmin
+    ? (db.prepare(
+        `SELECT COUNT(*) as c FROM "Charge" c2 JOIN "Room" r ON c2.roomId = r.id WHERE c2.status = 'PENDING' AND r.ownerId = ?`
+      ).get(userId) as { c: number }).c
+    : (db.prepare(`SELECT COUNT(*) as c FROM "Charge" WHERE status = 'PENDING'`).get() as { c: number }).c
+
+  const pendingRequests = isAdmin
+    ? (db.prepare(
+        `SELECT COUNT(*) as c FROM "AccessRequest" ar JOIN "Room" r ON ar.roomId = r.id WHERE ar.status = 'PENDING' AND r.ownerId = ?`
+      ).get(userId) as { c: number }).c
+    : (db.prepare(`SELECT COUNT(*) as c FROM "AccessRequest" WHERE status = 'PENDING'`).get() as { c: number }).c
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">

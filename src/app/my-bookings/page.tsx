@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { format } from "date-fns"
@@ -10,6 +10,11 @@ import CancelBookingButton from "@/components/CancelBookingButton"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = { title: "My Bookings | Laundry" }
+
+type BookingRow = {
+  id: string; machineType: string; machineNumber: number
+  startTime: string; endTime: string; roomId: string; roomName: string
+}
 
 export default async function MyBookingsPage() {
   const session = await auth()
@@ -21,18 +26,25 @@ export default async function MyBookingsPage() {
   const now = new Date()
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  const [upcoming, past] = await Promise.all([
-    prisma.booking.findMany({
-      where: { userId: session.user.id, startTime: { gte: now } },
-      include: { room: { select: { id: true, name: true } } },
-      orderBy: { startTime: "asc" },
-    }),
-    prisma.booking.findMany({
-      where: { userId: session.user.id, startTime: { gte: thirtyDaysAgo, lt: now } },
-      include: { room: { select: { id: true, name: true } } },
-      orderBy: { startTime: "desc" },
-    }),
-  ])
+  const upcomingRows = db.prepare(
+    `SELECT b.id, b.machineType, b.machineNumber, b.startTime, b.endTime,
+     r.id as roomId, r.name as roomName
+     FROM "Booking" b JOIN "Room" r ON b.roomId = r.id
+     WHERE b.userId = ? AND b.startTime >= ?
+     ORDER BY b.startTime ASC`
+  ).all(session.user.id, now.toISOString()) as BookingRow[]
+
+  const pastRows = db.prepare(
+    `SELECT b.id, b.machineType, b.machineNumber, b.startTime, b.endTime,
+     r.id as roomId, r.name as roomName
+     FROM "Booking" b JOIN "Room" r ON b.roomId = r.id
+     WHERE b.userId = ? AND b.startTime >= ? AND b.startTime < ?
+     ORDER BY b.startTime DESC`
+  ).all(session.user.id, thirtyDaysAgo.toISOString(), now.toISOString()) as BookingRow[]
+
+  const toBooking = (r: BookingRow) => ({ ...r, room: { id: r.roomId, name: r.roomName } })
+  const upcoming = upcomingRows.map(toBooking)
+  const past = pastRows.map(toBooking)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -81,11 +93,11 @@ export default async function MyBookingsPage() {
                     <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1">
                         <Calendar size={11} />
-                        {format(b.startTime, "EEEE, d. MMMM yyyy", { locale: dateLocale })}
+                        {format(new Date(b.startTime), "EEEE, d. MMMM yyyy", { locale: dateLocale })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock size={11} />
-                        {format(b.startTime, "HH:mm")} – {format(b.endTime, "HH:mm")}
+                        {format(new Date(b.startTime), "HH:mm")} – {format(new Date(b.endTime), "HH:mm")}
                       </span>
                     </div>
                   </div>
@@ -122,11 +134,11 @@ export default async function MyBookingsPage() {
                     <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1">
                         <Calendar size={11} />
-                        {format(b.startTime, "EEEE, d. MMMM yyyy", { locale: dateLocale })}
+                        {format(new Date(b.startTime), "EEEE, d. MMMM yyyy", { locale: dateLocale })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock size={11} />
-                        {format(b.startTime, "HH:mm")} – {format(b.endTime, "HH:mm")}
+                        {format(new Date(b.startTime), "HH:mm")} – {format(new Date(b.endTime), "HH:mm")}
                       </span>
                     </div>
                   </div>

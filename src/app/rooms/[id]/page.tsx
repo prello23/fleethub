@@ -1,15 +1,21 @@
 import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { WashingMachine, Waves, Clock, Settings, ArrowLeft } from "lucide-react"
 import BookingCalendar from "@/components/BookingCalendar"
 import type { Metadata } from "next"
 
+type RoomRow = {
+  id: string; name: string; description: string | null
+  washingMachines: number; dryers: number; slotDurationMinutes: number
+  pricePerSlot: number; ownerId: string | null
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  const room = await prisma.room.findUnique({ where: { id }, select: { name: true } })
+  const room = db.prepare(`SELECT name FROM "Room" WHERE id = ?`).get(id) as { name: string } | undefined
   return { title: room ? `${room.name} | Laundry` : "Laundry Room | Laundry" }
 }
 
@@ -19,7 +25,9 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
 
   const { t } = await getServerT()
   const { id } = await params
-  const room = await prisma.room.findUnique({ where: { id } })
+  const room = db.prepare(
+    `SELECT id, name, description, washingMachines, dryers, slotDurationMinutes, pricePerSlot, ownerId FROM "Room" WHERE id = ?`
+  ).get(id) as RoomRow | undefined
   if (!room) notFound()
 
   const isAdminOrSuper = session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN"

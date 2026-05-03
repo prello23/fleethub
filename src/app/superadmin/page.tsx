@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import Link from "next/link"
 import { Crown, Users, CreditCard, WashingMachine, TrendingUp, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
@@ -10,23 +10,32 @@ export default async function SuperAdminPage() {
   const session = await auth()
   if (!session || session.user.role !== "SUPER_ADMIN") redirect("/rooms")
 
-  const [totalUsers, totalAdmins, totalRooms, totalBookings, activeSubs, plans, recentSubs] = await Promise.all([
-    prisma.user.count({ where: { role: "USER" } }),
-    prisma.user.count({ where: { role: "ADMIN" } }),
-    prisma.room.count(),
-    prisma.booking.count(),
-    prisma.subscription.count({ where: { status: "ACTIVE" } }),
-    prisma.plan.findMany({ where: { active: true }, orderBy: { price: "asc" } }),
-    prisma.subscription.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { user: { select: { name: true, email: true } }, plan: true },
-    }),
-  ])
+  const totalUsers = (db.prepare(`SELECT COUNT(*) as c FROM "User" WHERE role = 'USER'`).get() as { c: number }).c
+  const totalAdmins = (db.prepare(`SELECT COUNT(*) as c FROM "User" WHERE role = 'ADMIN'`).get() as { c: number }).c
+  const totalRooms = (db.prepare(`SELECT COUNT(*) as c FROM "Room"`).get() as { c: number }).c
+  const totalBookings = (db.prepare(`SELECT COUNT(*) as c FROM "Booking"`).get() as { c: number }).c
+  const activeSubs = (db.prepare(`SELECT COUNT(*) as c FROM "Subscription" WHERE status = 'ACTIVE'`).get() as { c: number }).c
+  const adminsWithoutSub = (db.prepare(
+    `SELECT COUNT(*) as c FROM "User" u WHERE u.role = 'ADMIN' AND NOT EXISTS (SELECT 1 FROM "Subscription" s WHERE s.userId = u.id)`
+  ).get() as { c: number }).c
 
-  const adminsWithoutSub = await prisma.user.count({
-    where: { role: "ADMIN", subscription: null },
-  })
+  const plans = db.prepare(
+    `SELECT id, name, price, currency, maxRooms FROM "Plan" WHERE active = 1 ORDER BY price ASC`
+  ).all() as { id: string; name: string; price: number; currency: string; maxRooms: number }[]
+
+  const recentSubRows = db.prepare(
+    `SELECT s.id, s.status, s.createdAt, u.name as userName, u.email as userEmail, p.name as planName
+     FROM "Subscription" s
+     JOIN "User" u ON s.userId = u.id
+     JOIN "Plan" p ON s.planId = p.id
+     ORDER BY s.createdAt DESC LIMIT 5`
+  ).all() as { id: string; status: string; createdAt: string; userName: string; userEmail: string; planName: string }[]
+
+  const recentSubs = recentSubRows.map(r => ({
+    id: r.id, status: r.status, createdAt: r.createdAt,
+    user: { name: r.userName, email: r.userEmail },
+    plan: { name: r.planName }
+  }))
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -40,7 +49,6 @@ export default async function SuperAdminPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <p className="text-xs text-gray-500 uppercase tracking-wide">Users</p>
@@ -60,7 +68,6 @@ export default async function SuperAdminPage() {
         </div>
       </div>
 
-      {/* Alert for admins without subscription */}
       {adminsWithoutSub > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
           <AlertCircle className="text-amber-500 flex-shrink-0" size={20} />
@@ -83,7 +90,6 @@ export default async function SuperAdminPage() {
           </div>
           <p className="text-sm text-gray-500">View all admins, their subscriptions and bookings. Log in as any user.</p>
         </Link>
-
         <Link href="/superadmin/subscriptions" className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-green-200 transition-all group">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
@@ -91,9 +97,8 @@ export default async function SuperAdminPage() {
             </div>
             <h2 className="font-semibold text-gray-900">Subscriptions</h2>
           </div>
-          <p className="text-sm text-gray-500">Manage subscriptions for all admins. Change plan, status and end date.</p>
+          <p className="text-sm text-gray-500">Manage subscriptions for all admins.</p>
         </Link>
-
         <Link href="/superadmin/plans" className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-purple-200 transition-all group">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -101,12 +106,11 @@ export default async function SuperAdminPage() {
             </div>
             <h2 className="font-semibold text-gray-900">Plans</h2>
           </div>
-          <p className="text-sm text-gray-500">Create and edit pricing plans for admin accounts.</p>
+          <p className="text-sm text-gray-500">Create and edit pricing plans.</p>
         </Link>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-6">
-        {/* Plans overview */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900">Plans</h3>
@@ -127,7 +131,6 @@ export default async function SuperAdminPage() {
           </div>
         </div>
 
-        {/* Recent subscriptions */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900">Recent subscriptions</h3>

@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { getServerT } from "@/lib/server-i18n"
 import Link from "next/link"
 import { ArrowLeft, User } from "lucide-react"
@@ -18,10 +18,13 @@ export default async function ProfilePage() {
 
   const { t } = await getServerT()
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { name: true, email: true, apartment: true, notifyPush: true, notifyEmail: true },
-  })
+  const user = db.prepare(
+    `SELECT name, email, apartment, notifyPush, notifyEmail FROM "User" WHERE id = ?`
+  ).get(session.user.id) as {
+    name: string; email: string; apartment: string | null
+    notifyPush: number; notifyEmail: number
+  } | undefined
+
   if (!user) redirect("/login")
 
   return (
@@ -39,7 +42,7 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <ProfileForm user={user} />
+      <ProfileForm user={{ ...user, notifyPush: !!user.notifyPush, notifyEmail: !!user.notifyEmail }} />
       <div className="mt-6">
         <CheckForUpdates currentVersion={APP_VERSION} />
       </div>

@@ -1,6 +1,5 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
-import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { authConfig } from "./auth.config"
 
@@ -14,25 +13,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
+        try {
+          // Direct better-sqlite3 — synchronous, zero extra threads, guaranteed to work
+          const { db } = await import("@/lib/db")
+          const user = db.prepare(
+            "SELECT id, name, email, password, role, apartment FROM \"User\" WHERE email = ?"
+          ).get(credentials.email as string) as {
+            id: string; name: string; email: string; password: string
+            role: string; apartment: string | null
+          } | undefined
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        })
+          if (!user) return null
 
-        if (!user) return null
+          const valid = await bcrypt.compare(credentials.password as string, user.password)
+          if (!valid) return null
 
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
-        if (!valid) return null
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          apartment: user.apartment,
+          return { id: user.id, name: user.name, email: user.email, role: user.role, apartment: user.apartment }
+        } catch (err) {
+          console.error("[auth] authorize error:", err)
+          return null
         }
       },
     }),
