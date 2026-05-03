@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation"
 import OneSignalInit from "@/components/OneSignalInit"
 import { LanguageProvider } from "@/components/LanguageProvider"
 import UpdateBanner, { UpdateProvider } from "@/components/UpdateBanner"
+import ErrorBoundary from "@/components/ErrorBoundary"
 import type { Lang } from "@/lib/i18n"
 import { cookies } from "next/headers"
 
@@ -38,13 +39,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProvider>
           <LanguageProvider initialLang={lang}>
             <UpdateProvider initialVersion={APP_VERSION}>
-              <OneSignalInit />
-              <UpdateBanner />
-              <Navigation />
-              <main className="flex-1">{children}</main>
-              <footer className="text-center text-xs text-gray-400 py-4">
-                Laundry booking system &mdash; v{APP_VERSION}
-              </footer>
+              <ErrorBoundary>
+                <OneSignalInit />
+                <UpdateBanner />
+                <Navigation />
+                <main className="flex-1">{children}</main>
+                <footer className="text-center text-xs text-gray-400 py-4">
+                  Laundry booking system &mdash; v{APP_VERSION}
+                </footer>
+              </ErrorBoundary>
             </UpdateProvider>
           </LanguageProvider>
         </SessionProvider>
