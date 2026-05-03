@@ -2,14 +2,14 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { authConfig } from "./auth.config"
-import Database from "better-sqlite3"
 
-// Use direct SQLite (better-sqlite3) for auth to avoid Prisma adapter issues in production
-function getUserByEmail(email: string): { id: string; name: string; email: string; password: string; role: string; apartment: string | null } | null {
+// Use direct SQLite (dynamic import of better-sqlite3) to avoid Prisma adapter issues in production
+async function getUserByEmail(email: string): Promise<{ id: string; name: string; email: string; password: string; role: string; apartment: string | null } | null> {
   try {
+    const BetterSqlite3 = (await import("better-sqlite3")).default
     const url = process.env["DATABASE_URL"] ?? "file:./dev.db"
     const dbPath = url.startsWith("file:") ? url.slice(5) : url
-    const db = new Database(dbPath)
+    const db = new BetterSqlite3(dbPath)
     const user = db.prepare("SELECT id, name, email, password, role, apartment FROM User WHERE email = ?").get(email) as { id: string; name: string; email: string; password: string; role: string; apartment: string | null } | undefined
     db.close()
     return user ?? null
@@ -30,7 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const user = getUserByEmail(credentials.email as string)
+        const user = await getUserByEmail(credentials.email as string)
 
         if (!user) return null
 
