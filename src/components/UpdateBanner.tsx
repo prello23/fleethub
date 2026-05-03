@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react"
 import { RefreshCw } from "lucide-react"
-import { useT } from "@/components/LanguageProvider"
 
 // ---------- context ----------
 
@@ -49,11 +48,6 @@ export function UpdateProvider({
           })
         })
       }).catch(() => {})
-
-      // When the new SW takes control, reload to serve fresh content
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        window.location.reload()
-      })
     }
 
     // Version-polling fallback — catches deploys even without SW
@@ -71,11 +65,12 @@ export function UpdateProvider({
   }, [initialVersion])
 
   function triggerUpdate() {
+    // Tell the waiting SW to activate, then reload immediately.
+    // The user tapped the button — this is the only place reload happens.
     if (waitingSWRef.current) {
       waitingSWRef.current.postMessage({ type: "SKIP_WAITING" })
-    } else {
-      window.location.reload()
     }
+    window.location.reload()
   }
 
   return (
@@ -88,7 +83,6 @@ export function UpdateProvider({
 // ---------- banner UI ----------
 
 export default function UpdateBanner() {
-  const { t } = useT()
   const { updateAvailable, triggerUpdate } = useUpdateAvailable()
 
   if (!updateAvailable) return null
@@ -96,12 +90,12 @@ export default function UpdateBanner() {
   return (
     <div className="w-full bg-amber-400 text-amber-950 px-4 py-2.5 flex items-center justify-center gap-3 z-50">
       <RefreshCw size={14} className="flex-shrink-0" />
-      <span className="text-sm font-medium">{t("update.available")}</span>
+      <span className="text-sm font-medium">Ný útgáfa er til staðar</span>
       <button
         onClick={triggerUpdate}
         className="bg-amber-950 text-amber-50 px-3 py-1 rounded-lg text-sm font-semibold hover:bg-amber-900 transition-colors"
       >
-        {t("update.button")}
+        Uppfæra
       </button>
     </div>
   )

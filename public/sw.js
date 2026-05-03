@@ -1,8 +1,7 @@
 const CACHE_NAME = 'laundry-v' + Date.now()
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting()
-})
+// Do NOT call skipWaiting() here — wait for explicit SKIP_WAITING message
+self.addEventListener('install', () => { /* wait */ })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -12,6 +11,7 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+// Only skip waiting when the page explicitly asks
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
 })
