@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react"
 import { WashingMachine, LogOut, Settings, Home, Users, Crown, Calendar, User, FileCheck } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useT } from "@/components/LanguageProvider"
+import { isBeta } from "@/lib/env"
 
 export default function Navigation() {
   const { data: session } = useSession()
@@ -34,6 +35,11 @@ export default function Navigation() {
         <Link href="/" className="flex items-center gap-2 font-bold text-lg hover:opacity-80">
           <WashingMachine size={24} />
           <span className="hidden sm:inline">{t("nav.laundry")}</span>
+          {isBeta && (
+            <span className="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded uppercase tracking-wide">
+              BETA
+            </span>
+          )}
         </Link>
 
         {session ? (
