@@ -70,3 +70,41 @@ export function bookingEndEmail(name: string, roomName: string, endTime: Date, m
   }
 }
 
+export function bookingConfirmedEmail(name: string, roomName: string, startTime: Date, endTime: Date) {
+  const date = startTime.toLocaleDateString("is-IS", { weekday: "long", day: "numeric", month: "long" })
+  const start = startTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  const end = endTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  return {
+    subject: `Bókun staðfest – ${roomName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px">
+        <h2 style="color:#2563eb">✅ Bókun staðfest</h2>
+        <p>Hæ <strong>${name}</strong>,</p>
+        <p>Bókun þín í <strong>${roomName}</strong> hefur verið staðfest.</p>
+        <p><strong>Dagsetning:</strong> ${date}</p>
+        <p><strong>Tími:</strong> ${start} – ${end}</p>
+        <p style="color:#6b7280;font-size:14px">Þvottabókunarkerfi – sjálfvirk tilkynning.</p>
+      </div>
+    `,
+  }
+}
+
+export function bookingCancelledEmail(name: string, roomName: string, startTime: Date, endTime: Date) {
+  const date = startTime.toLocaleDateString("is-IS", { weekday: "long", day: "numeric", month: "long" })
+  const start = startTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  const end = endTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  return {
+    subject: `Bókun aflýst – ${roomName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px">
+        <h2 style="color:#dc2626">❌ Bókun aflýst</h2>
+        <p>Hæ <strong>${name}</strong>,</p>
+        <p>Bókun þín í <strong>${roomName}</strong> hefur verið aflýst.</p>
+        <p><strong>Dagsetning:</strong> ${date}</p>
+        <p><strong>Tími:</strong> ${start} – ${end}</p>
+        <p style="color:#6b7280;font-size:14px">Þvottabókunarkerfi – sjálfvirk tilkynning.</p>
+      </div>
+    `,
+  }
+}
+

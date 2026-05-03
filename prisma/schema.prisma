@@ -8,19 +8,22 @@ datasource db {
 }
 
 model User {
-  id               String          @id @default(cuid())
-  name             String
-  email            String          @unique
-  password         String
-  role             String          @default("USER")
-  apartment        String?
-  pushSubscription String?
-  createdAt        DateTime        @default(now())
-  bookings         Booking[]
-  subscription     Subscription?
-  rooms            UserRoom[]
-  charges          Charge[]
-  accessRequests   AccessRequest[]
+  id                 String          @id @default(cuid())
+  name               String
+  email              String          @unique
+  password           String
+  role               String          @default("USER")
+  apartment          String?
+  pushSubscription   String?
+  oneSignalPlayerId  String?
+  notifyPush         Boolean         @default(true)
+  notifyEmail        Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+  bookings           Booking[]
+  subscription       Subscription?
+  rooms              UserRoom[]
+  charges            Charge[]
+  accessRequests     AccessRequest[]
 }
 
 model Room {

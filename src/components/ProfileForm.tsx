@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Bell, BellOff, Mail } from "lucide-react"
 
 type Props = {
-  user: { name: string; email: string; apartment: string | null }
+  user: { name: string; email: string; apartment: string | null; notifyPush: boolean; notifyEmail: boolean }
 }
 
 export default function ProfileForm({ user }: Props) {
@@ -17,6 +17,11 @@ export default function ProfileForm({ user }: Props) {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState("")
   const [pwSuccess, setPwSuccess] = useState(false)
+
+  const [notifyPush, setNotifyPush] = useState(user.notifyPush)
+  const [notifyEmail, setNotifyEmail] = useState(user.notifyEmail)
+  const [notifyLoading, setNotifyLoading] = useState(false)
+  const [notifySuccess, setNotifySuccess] = useState(false)
 
   async function handleApartment(e: React.FormEvent) {
     e.preventDefault()
@@ -50,6 +55,20 @@ export default function ProfileForm({ user }: Props) {
       setPwError(data.error === "Wrong password" ? "Incorrect current password" : "Failed to change password")
     }
     setPwLoading(false)
+  }
+
+  async function handleNotifications(e: React.FormEvent) {
+    e.preventDefault()
+    setNotifyLoading(true)
+    setNotifySuccess(false)
+    await fetch("/api/user/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notifyPush, notifyEmail }),
+    })
+    setNotifySuccess(true)
+    setNotifyLoading(false)
+    setTimeout(() => setNotifySuccess(false), 3000)
   }
 
   return (
@@ -91,6 +110,64 @@ export default function ProfileForm({ user }: Props) {
           >
             {aptLoading && <Loader2 size={14} className="animate-spin" />}
             Save
+          </button>
+        </form>
+      </div>
+
+      {/* Notifications */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <h2 className="text-base font-semibold text-gray-900 mb-4">Tilkynningar</h2>
+        <form onSubmit={handleNotifications} className="space-y-4">
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${notifyPush ? "bg-blue-100" : "bg-gray-100"}`}>
+                {notifyPush ? <Bell size={16} className="text-blue-700" /> : <BellOff size={16} className="text-gray-400" />}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Push tilkynningar</p>
+                <p className="text-xs text-gray-500">Vafragluggi / símatilkynningar</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={notifyPush}
+              onClick={() => setNotifyPush(!notifyPush)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifyPush ? "bg-blue-700" : "bg-gray-300"}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifyPush ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </label>
+
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${notifyEmail ? "bg-blue-100" : "bg-gray-100"}`}>
+                <Mail size={16} className={notifyEmail ? "text-blue-700" : "text-gray-400"} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Tölvupóststilkynningar</p>
+                <p className="text-xs text-gray-500">Bókunarstaðfestingar og minnisatriði</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={notifyEmail}
+              onClick={() => setNotifyEmail(!notifyEmail)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifyEmail ? "bg-blue-700" : "bg-gray-300"}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifyEmail ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </label>
+
+          {notifySuccess && <p className="text-green-600 text-sm">Stillingar vistaðar!</p>}
+          <button
+            type="submit"
+            disabled={notifyLoading}
+            className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 disabled:opacity-60 flex items-center gap-2"
+          >
+            {notifyLoading && <Loader2 size={14} className="animate-spin" />}
+            Vista stillingar
           </button>
         </form>
       </div>

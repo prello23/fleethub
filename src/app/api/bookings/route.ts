@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { notifyBookingConfirmed } from "@/lib/notifications"
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -87,6 +88,23 @@ export async function POST(req: Request) {
       user: { select: { id: true, name: true, apartment: true } },
     },
   })
+
+  // Fire notifications asynchronously — don't block the response
+  prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, name: true, email: true, notifyPush: true, notifyEmail: true, pushSubscription: true },
+  }).then((user) => {
+    if (!user) return
+    notifyBookingConfirmed({
+      id: booking.id,
+      startTime: start,
+      endTime: end,
+      machineType,
+      machineNumber,
+      user,
+      room: { name: room.name },
+    }).catch(() => {})
+  }).catch(() => {})
 
   return NextResponse.json(booking, { status: 201 })
 }

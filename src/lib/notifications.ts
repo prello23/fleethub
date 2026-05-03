@@ -1,7 +1,76 @@
 import { prisma } from "./prisma"
-import { isOneSignalConfigured, sendPushToUser, sendEmailToUser } from "./onesignal"
+import { isOneSignalConfigured, sendPushToUser, sendEmailToUser, sendPushToAdmins } from "./onesignal"
 import { sendPushNotification } from "./push"
-import { sendEmail, bookingStartEmail, bookingEndEmail } from "./email"
+import { sendEmail, bookingStartEmail, bookingEndEmail, bookingConfirmedEmail, bookingCancelledEmail } from "./email"
+
+type BookingWithRelations = {
+  id: string
+  startTime: Date
+  endTime: Date
+  user: { id: string; name: string; email: string; notifyPush: boolean; notifyEmail: boolean; pushSubscription: string | null }
+  room: { name: string }
+  machineType: string
+  machineNumber: number
+}
+
+export async function notifyBookingConfirmed(booking: BookingWithRelations) {
+  const { user, room } = booking
+  const timeStr = `${booking.startTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} – ${booking.endTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+  const pushTitle = "✅ Bókun staðfest"
+  const pushBody = `${room.name} – ${timeStr}`
+  const adminTitle = "🧺 Ný bókun"
+  const adminBody = `${user.name} bókaði tíma í ${room.name}`
+
+  const useOneSignal = isOneSignalConfigured()
+
+  if (user.notifyPush) {
+    if (useOneSignal) {
+      await sendPushToUser(user.id, pushTitle, pushBody).catch(() => {})
+    } else if (user.pushSubscription) {
+      await sendPushNotification(user.pushSubscription, { title: pushTitle, body: pushBody }).catch(() => {})
+    }
+  }
+
+  if (user.notifyEmail) {
+    const mail = bookingConfirmedEmail(user.name, room.name, booking.startTime, booking.endTime)
+    if (useOneSignal) {
+      await sendEmailToUser(user.id, mail.subject, mail.html).catch(() => {})
+    } else {
+      await sendEmail({ to: user.email, subject: mail.subject, html: mail.html }).catch(() => {})
+    }
+  }
+
+  // Notify admins
+  if (useOneSignal) {
+    await sendPushToAdmins(adminTitle, adminBody).catch(() => {})
+  }
+}
+
+export async function notifyBookingCancelled(booking: BookingWithRelations) {
+  const { user, room } = booking
+  const timeStr = `${booking.startTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} – ${booking.endTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+  const pushTitle = "❌ Bókun aflýst"
+  const pushBody = `${room.name} – ${timeStr}`
+
+  const useOneSignal = isOneSignalConfigured()
+
+  if (user.notifyPush) {
+    if (useOneSignal) {
+      await sendPushToUser(user.id, pushTitle, pushBody).catch(() => {})
+    } else if (user.pushSubscription) {
+      await sendPushNotification(user.pushSubscription, { title: pushTitle, body: pushBody }).catch(() => {})
+    }
+  }
+
+  if (user.notifyEmail) {
+    const mail = bookingCancelledEmail(user.name, room.name, booking.startTime, booking.endTime)
+    if (useOneSignal) {
+      await sendEmailToUser(user.id, mail.subject, mail.html).catch(() => {})
+    } else {
+      await sendEmail({ to: user.email, subject: mail.subject, html: mail.html }).catch(() => {})
+    }
+  }
+}
 
 export async function processNotifications() {
   const now = new Date()
