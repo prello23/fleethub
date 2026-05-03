@@ -31,6 +31,10 @@ export async function register() {
         db.exec(`ALTER TABLE "User" ADD COLUMN "notifyEmail" INTEGER NOT NULL DEFAULT 1`)
         console.log("[migration] Added notifyEmail column")
       }
+      if (!colNames.includes("pushSubscription")) {
+        db.exec(`ALTER TABLE "User" ADD COLUMN "pushSubscription" TEXT`)
+        console.log("[migration] Added pushSubscription column")
+      }
 
       db.close()
       console.log("[migration] User columns ensured ✓")
