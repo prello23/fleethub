@@ -1,107 +1,91 @@
 import "dotenv/config"
 import { PrismaClient } from "../src/generated/prisma/client"
-import Database from "better-sqlite3"
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
 import bcrypt from "bcryptjs"
 
 const url = process.env.DATABASE_URL ?? "file:./dev.db"
 const dbPath = url.startsWith("file:") ? url.slice(5) : url
-const sqlite = new Database(dbPath)
-const adapter = new PrismaBetterSqlite3(sqlite)
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const adapter = new PrismaBetterSqlite3({ url: dbPath } as any)
 const prisma = new PrismaClient({ adapter } as never)
 
 async function main() {
-  // Super Admin
-  const superAdminExists = await prisma.user.findUnique({ where: { email: "elvarpa@gmail.com" } })
-  if (!superAdminExists) {
-    await prisma.user.create({
-      data: {
-        name: "Elvar",
-        email: "elvarpa@gmail.com",
-        password: await bcrypt.hash("Valdisgunnar2312", 12),
-        role: "SUPER_ADMIN",
+  console.log("🌱 Seeding database...")
+
+  const password = await bcrypt.hash("Laundry123!", 10)
+
+  // Create laundry house
+  const laundryHouse = await prisma.laundryHouse.upsert({
+    where: { id: "house-1" },
+    update: {},
+    create: {
+      id: "house-1",
+      name: "Þvottahús 1",
+      address: "Húsagata 1",
+    },
+  })
+
+  // Seed users
+  const users = [
+    { email: "user1@laundry.is", name: "User One" },
+    { email: "user2@laundry.is", name: "User Two" },
+  ]
+  for (const u of users) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: {
+        email: u.email,
+        name: u.name,
+        password,
+        role: "USER",
+        laundryHouseId: laundryHouse.id,
       },
     })
-    console.log("✓ Super Admin created: elvarpa@gmail.com")
   }
 
-  // Admin
-  const adminExists = await prisma.user.findUnique({ where: { email: "admin@laundry.local" } })
-  if (!adminExists) {
-    await prisma.user.create({
-      data: {
-        name: "Admin",
-        email: "admin@laundry.local",
-        password: await bcrypt.hash("admin1234", 12),
+  // Seed admins
+  const admins = [
+    { email: "admin1@laundry.is", name: "Admin One" },
+    { email: "admin2@laundry.is", name: "Admin Two" },
+    { email: "admin3@laundry.is", name: "Admin Three" },
+  ]
+  for (const a of admins) {
+    await prisma.user.upsert({
+      where: { email: a.email },
+      update: {},
+      create: {
+        email: a.email,
+        name: a.name,
+        password,
         role: "ADMIN",
+        laundryHouseId: laundryHouse.id,
       },
     })
-    console.log("✓ Admin created: admin@laundry.local / admin1234")
   }
 
-  // Default plans
-  const planCount = await prisma.plan.count()
-  if (planCount === 0) {
-    await prisma.plan.createMany({
-      data: [
-        {
-          name: "Grunnáskrift",
-          description: "1 þvottahús, allar grunneiginleikar",
-          price: 2990,
-          currency: "ISK",
-          intervalDays: 30,
-          maxRooms: 1,
-        },
-        {
-          name: "Meðaláskrift",
-          description: "Allt að 3 þvottahús",
-          price: 5990,
-          currency: "ISK",
-          intervalDays: 30,
-          maxRooms: 3,
-        },
-        {
-          name: "Stórfyrirtæki",
-          description: "Ótakmarkaður fjöldi þvottahúsa",
-          price: 12990,
-          currency: "ISK",
-          intervalDays: 30,
-          maxRooms: 999,
-        },
-      ],
-    })
-    console.log("✓ Created 3 default plans")
-  }
+  // Super admin
+  await prisma.user.upsert({
+    where: { email: "elvarpa@gmail.com" },
+    update: {},
+    create: {
+      email: "elvarpa@gmail.com",
+      name: "Elvar Páll Sævarsson",
+      password: await bcrypt.hash("Valdisgunnar2312", 10),
+      role: "SUPER_ADMIN",
+      laundryHouseId: laundryHouse.id,
+    },
+  })
 
-  // Example rooms
-  const roomCount = await prisma.room.count()
-  if (roomCount === 0) {
-    await prisma.room.createMany({
-      data: [
-        {
-          name: "Þvottahús A-hluta",
-          description: "Staðsett í kjallara við inngang A",
-          washingMachines: 3,
-          dryers: 2,
-          slotDurationMinutes: 60,
-          notifyMinutesBefore: 30,
-          notifyMinutesBeforeEnd: 10,
-        },
-        {
-          name: "Þvottahús B-hluta",
-          description: "Staðsett á jarðhæð við inngang B",
-          washingMachines: 2,
-          dryers: 1,
-          slotDurationMinutes: 90,
-          notifyMinutesBefore: 20,
-          notifyMinutesBeforeEnd: 10,
-        },
-      ],
-    })
-    console.log("✓ Created 2 example rooms")
-  }
+  console.log("✅ Seed complete!")
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect())
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
