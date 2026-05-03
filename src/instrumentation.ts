@@ -8,21 +8,32 @@ export async function register() {
       console.error("UNHANDLED REJECTION at:", promise, "reason:", reason)
     })
 
-    // Runtime migration: add new User columns if they don't exist yet.
-    // SQLite throws "duplicate column name" when the column is already
-    // present — the inner catch() silences that expected error.
+    // Runtime migration: add new User columns using better-sqlite3 directly.
+    // $executeRawUnsafe is NOT supported with Prisma driver adapters — use DB directly.
     try {
-      const { prisma } = await import("@/lib/prisma")
-      await prisma.$executeRawUnsafe(
-        `ALTER TABLE "User" ADD COLUMN "oneSignalPlayerId" TEXT`
-      ).catch(() => {})
-      await prisma.$executeRawUnsafe(
-        `ALTER TABLE "User" ADD COLUMN "notifyPush" INTEGER NOT NULL DEFAULT 1`
-      ).catch(() => {})
-      await prisma.$executeRawUnsafe(
-        `ALTER TABLE "User" ADD COLUMN "notifyEmail" INTEGER NOT NULL DEFAULT 1`
-      ).catch(() => {})
-      console.log("[migration] User columns ensured")
+      const Database = (await import("better-sqlite3")).default
+      const url = process.env.DATABASE_URL ?? "file:./dev.db"
+      const dbPath = url.startsWith("file:") ? url.slice(5) : url
+      const db = new Database(dbPath)
+
+      const columns = db.pragma("table_info(User)") as Array<{ name: string }>
+      const colNames = columns.map((c) => c.name)
+
+      if (!colNames.includes("oneSignalPlayerId")) {
+        db.exec(`ALTER TABLE "User" ADD COLUMN "oneSignalPlayerId" TEXT`)
+        console.log("[migration] Added oneSignalPlayerId column")
+      }
+      if (!colNames.includes("notifyPush")) {
+        db.exec(`ALTER TABLE "User" ADD COLUMN "notifyPush" INTEGER NOT NULL DEFAULT 1`)
+        console.log("[migration] Added notifyPush column")
+      }
+      if (!colNames.includes("notifyEmail")) {
+        db.exec(`ALTER TABLE "User" ADD COLUMN "notifyEmail" INTEGER NOT NULL DEFAULT 1`)
+        console.log("[migration] Added notifyEmail column")
+      }
+
+      db.close()
+      console.log("[migration] User columns ensured ✓")
     } catch (err) {
       console.error("[migration] Startup migration failed:", err)
     }
