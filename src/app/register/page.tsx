@@ -3,10 +3,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { WashingMachine, Loader2 } from "lucide-react"
+import { WashingMachine, Loader2, Gift } from "lucide-react"
+import { useT } from "@/components/LanguageProvider"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useT()
   const [form, setForm] = useState({ name: "", email: "", password: "", apartment: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -37,19 +39,24 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <WashingMachine className="text-blue-700" size={32} />
+            <WashingMachine className="text-blue-600" size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Register</h1>
-          <p className="text-gray-500 text-sm mt-1">Create an account for the laundry room booking system</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("register.subtitle")}</h1>
+
+          {/* Trial messaging */}
+          <div className="mt-3 inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium px-3 py-1.5 rounded-full">
+            <Gift size={13} />
+            {t("register.trialNote")}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md border border-gray-200 p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg border border-red-200">
+            <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg border border-red-200">
               {error}
             </div>
           )}
@@ -107,16 +114,16 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-700 text-white py-2.5 rounded-lg font-medium hover:bg-blue-800 disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={16} className="animate-spin" />}
-            Create account
+            {t("landing.ctaStart")}
           </button>
 
           <p className="text-center text-sm text-gray-500">
             Already have an account?{" "}
-            <Link href="/login" className="text-blue-700 font-medium hover:underline">
-              Sign in
+            <Link href="/login" className="text-blue-600 font-medium hover:underline">
+              {t("nav.signIn")}
             </Link>
           </p>
         </form>

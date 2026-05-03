@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # CLAUDE.md — Þróunarreglur fyrir þetta verkefni
 
 > Lestu þessa skrá vandlega í hvert skipti áður en þú gerir breytingar. Þessar reglur koma í veg fyrir server-hruni og villur.
@@ -101,10 +103,18 @@ Claude Code → git push → GitHub webhook → Hostinger auto-build (~60 sek) �
 ### Tungumál
 - Icelandic (IS) og English (EN) studdar
 - `src/lib/i18n.ts` — allar textar þar
-- `useT()` hook í components
+- `useT()` hook í client components, `getServerT()` í server components
+- **ALDREI** harðkóða enska texta beint í JSX — allt í gegnum i18n
+
+### Litakerfi og stíll
+- Primary: `blue-600` — Danger/destructive: `red-600`
+- Cards: `rounded-xl shadow-md` (ekki `rounded-lg` eða `shadow-sm`)
+- Inputs: `rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`
+- Mobile-first: base styles fyrir mobile, `sm:` og `md:` breakpoints fyrir stærri skjái
 
 ### Navigation header
-- **Óinnskráðir**: sýna aðeins Logo + language toggle + "Skrá inn" + "Nýskrá sig"
+- **Á `/login` og `/register`**: sýna aðeins Logo + language toggle (engar nav tenglar)
+- **Óinnskráðir**: Logo + language toggle + "Skrá inn" + "Nýskrá sig"
 - **Innskráðir**: sýna nav hlekki eftir hlutverki
 
 ### Landing page (`/`)
@@ -136,7 +146,7 @@ SMTP breytur (settar síðar): `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS
 1. Lesa þessa CLAUDE.md skrá FYRST
 2. Athuga `src/instrumentation.ts` — ef nýir dálkar: bæta við ALTER TABLE þar
 3. Keyra `npx prisma generate` eftir schema breytingar
-4. ALDREI keyra `prisma db push` 
+4. ALDREI keyra `prisma db push`
 5. Ganga úr skugga um að TypeScript villur séu suppressed í next.config.ts
 6. Push til GitHub — bíða 70-90 sek
 7. Kalla á `/api/seed?token=SEED_SECRET_2025` ef seed þarf uppfærslu

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { WashingMachine, LogOut, Settings, Home, Users, Crown, Calendar, User, FileCheck } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import { useT } from "@/components/LanguageProvider"
 import { isBeta } from "@/lib/env"
 
@@ -13,6 +14,8 @@ export default function Navigation() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const role = session?.user?.role
   const { lang, setLang, t } = useT()
+  const pathname = usePathname()
+  const isAuthPage = pathname === "/login" || pathname === "/register"
 
   useEffect(() => {
     if (!open) return
@@ -42,7 +45,15 @@ export default function Navigation() {
           )}
         </Link>
 
-        {session ? (
+        {/* On /login and /register only show the lang toggle */}
+        {isAuthPage ? (
+          <button
+            onClick={() => setLang(lang === "en" ? "is" : "en")}
+            className="text-xs px-2 py-1 rounded-lg bg-white/20 hover:bg-white/30 font-medium"
+          >
+            {lang === "en" ? "IS" : "EN"}
+          </button>
+        ) : session ? (
           <div className="flex items-center gap-1 sm:gap-4">
             {role === "SUPER_ADMIN" && (
               <>
@@ -171,6 +182,7 @@ export default function Navigation() {
             </Link>
           </div>
         )}
+
       </div>
     </nav>
   )
