@@ -8,44 +8,68 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const existingCount = await prisma.user.count()
-  if (existingCount > 1) {
-    return NextResponse.json({ message: "Already seeded", users: existingCount })
-  }
+  const results: string[] = []
 
-  const pw = await bcrypt.hash("Laundry123!", 10)
-
-  const room = await prisma.room.create({
-    data: {
-      name: "Þvottahús 1",
-      description: "Aðalþvottahús hússins",
-      address: "Reykjavík",
-      washingMachines: 2,
-      dryers: 1,
-      slotDurationMinutes: 60,
-      pricePerSlot: 0,
+  // Super admin — always upsert so password is always correct on every call
+  const superAdminPw = await bcrypt.hash("Valdisgunnar2312", 12)
+  await prisma.user.upsert({
+    where: { email: "elvarpa@gmail.com" },
+    update: { password: superAdminPw, name: "Elvar Páll Sævarsson", role: "SUPER_ADMIN" },
+    create: {
+      name: "Elvar Páll Sævarsson",
+      email: "elvarpa@gmail.com",
+      password: superAdminPw,
+      role: "SUPER_ADMIN",
     },
   })
+  results.push("superadmin: elvarpa@gmail.com (upserted)")
 
-  const users = await Promise.all([
-    prisma.user.create({ data: { name: "Jón Jónsson", email: "jon@laundry.is", password: pw, role: "USER", apartment: "1A" } }),
-    prisma.user.create({ data: { name: "Anna Sigurðardóttir", email: "anna@laundry.is", password: pw, role: "USER", apartment: "2B" } }),
-  ])
+  // Demo room
+  const existingRoom = await prisma.room.findFirst({ where: { name: "Þvottahús 1" } })
+  let room = existingRoom
+  if (!room) {
+    room = await prisma.room.create({
+      data: {
+        name: "Þvottahús 1",
+        description: "Aðalþvottahús hússins",
+        address: "Reykjavík",
+        washingMachines: 2,
+        dryers: 1,
+        slotDurationMinutes: 60,
+        pricePerSlot: 0,
+      },
+    })
+    results.push("room: Þvottahús 1 (created)")
+  } else {
+    results.push("room: Þvottahús 1 (already exists)")
+  }
 
-  const admins = await Promise.all([
-    prisma.user.create({ data: { name: "Gunnar Björnsson", email: "gunnar@laundry.is", password: pw, role: "ADMIN", apartment: "3C" } }),
-    prisma.user.create({ data: { name: "Sigríður Eiríksdóttir", email: "sigridur@laundry.is", password: pw, role: "ADMIN", apartment: "4D" } }),
-    prisma.user.create({ data: { name: "Magnús Pétursson", email: "magnus@laundry.is", password: pw, role: "ADMIN", apartment: "5E" } }),
-  ])
+  // Demo users — skip if email already registered
+  const demoPassword = await bcrypt.hash("Laundry123!", 10)
+  const demoUsers = [
+    { name: "Jón Jónsson", email: "jon@laundry.is", role: "USER", apartment: "1A" },
+    { name: "Anna Sigurðardóttir", email: "anna@laundry.is", role: "USER", apartment: "2B" },
+    { name: "Gunnar Björnsson", email: "gunnar@laundry.is", role: "ADMIN", apartment: "3C" },
+    { name: "Sigríður Eiríksdóttir", email: "sigridur@laundry.is", role: "ADMIN", apartment: "4D" },
+    { name: "Magnús Pétursson", email: "magnus@laundry.is", role: "ADMIN", apartment: "5E" },
+  ]
 
-  const allUsers = [...users, ...admins]
-  await Promise.all(allUsers.map((u) => prisma.userRoom.create({ data: { userId: u.id, roomId: room.id } })))
+  for (const u of demoUsers) {
+    const existing = await prisma.user.findUnique({ where: { email: u.email } })
+    if (!existing) {
+      const created = await prisma.user.create({
+        data: { name: u.name, email: u.email, password: demoPassword, role: u.role, apartment: u.apartment },
+      })
+      await prisma.userRoom.upsert({
+        where: { userId_roomId: { userId: created.id, roomId: room!.id } },
+        update: {},
+        create: { userId: created.id, roomId: room!.id },
+      })
+      results.push(`user: ${u.email} (created)`)
+    } else {
+      results.push(`user: ${u.email} (already exists)`)
+    }
+  }
 
-  return NextResponse.json({
-    success: true,
-    room: room.name,
-    users: users.map((u) => ({ name: u.name, email: u.email, role: u.role })),
-    admins: admins.map((u) => ({ name: u.name, email: u.email, role: u.role })),
-    password: "Laundry123!",
-  })
+  return NextResponse.json({ success: true, results, demoPassword: "Laundry123!" })
 }
