@@ -1,78 +1,105 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { createContext, useContext, useEffect, useRef, useState } from "react"
 import { RefreshCw } from "lucide-react"
 import { useT } from "@/components/LanguageProvider"
 
-export default function UpdateBanner({ initialVersion }: { initialVersion: string }) {
-  const { t } = useT()
+// ---------- context ----------
+
+type UpdateCtx = {
+  updateAvailable: boolean
+  triggerUpdate: () => void
+}
+
+const Ctx = createContext<UpdateCtx>({ updateAvailable: false, triggerUpdate: () => {} })
+
+export function useUpdateAvailable() {
+  return useContext(Ctx)
+}
+
+// ---------- provider ----------
+
+export function UpdateProvider({
+  initialVersion,
+  children,
+}: {
+  initialVersion: string
+  children: React.ReactNode
+}) {
   const [updateAvailable, setUpdateAvailable] = useState(false)
-  const waitingSwRef = useRef<ServiceWorker | null>(null)
+  const waitingSWRef = useRef<ServiceWorker | null>(null)
 
   useEffect(() => {
-    // --- Service Worker registration + updatefound listener ---
+    // Service Worker registration + updatefound listener
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").then((reg) => {
-        // If there's already a waiting SW when we register, surface the banner
         if (reg.waiting) {
-          waitingSwRef.current = reg.waiting
+          waitingSWRef.current = reg.waiting
           setUpdateAvailable(true)
         }
 
         reg.addEventListener("updatefound", () => {
-          const newSW = reg.installing
-          if (!newSW) return
-          newSW.addEventListener("statechange", () => {
-            if (newSW.state === "installed" && navigator.serviceWorker.controller) {
-              waitingSwRef.current = newSW
+          const sw = reg.installing
+          if (!sw) return
+          sw.addEventListener("statechange", () => {
+            if (sw.state === "installed" && navigator.serviceWorker.controller) {
+              waitingSWRef.current = sw
               setUpdateAvailable(true)
             }
           })
         })
       }).catch(() => {})
 
-      // When a new SW takes control, reload to get fresh content
+      // When the new SW takes control, reload to serve fresh content
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         window.location.reload()
       })
     }
 
-    // --- Version polling fallback (catches deployments even without SW) ---
-    const check = async () => {
+    // Version-polling fallback — catches deploys even without SW
+    const poll = async () => {
       try {
         const res = await fetch("/api/version", { cache: "no-store" })
         const data = await res.json()
-        if (data.version && data.version !== initialVersion) {
-          setUpdateAvailable(true)
-        }
-      } catch {
-        // network error — ignore
-      }
+        if (data.version && data.version !== initialVersion) setUpdateAvailable(true)
+      } catch { /* network error */ }
     }
 
-    check()
-    const interval = setInterval(check, 5 * 60 * 1000)
-    return () => clearInterval(interval)
+    poll()
+    const id = setInterval(poll, 5 * 60 * 1000)
+    return () => clearInterval(id)
   }, [initialVersion])
 
-  function handleUpdate() {
-    if (waitingSwRef.current) {
-      // Tell the waiting SW to activate; controllerchange listener reloads the page
-      waitingSwRef.current.postMessage({ type: "SKIP_WAITING" })
+  function triggerUpdate() {
+    if (waitingSWRef.current) {
+      waitingSWRef.current.postMessage({ type: "SKIP_WAITING" })
     } else {
       window.location.reload()
     }
   }
 
+  return (
+    <Ctx.Provider value={{ updateAvailable, triggerUpdate }}>
+      {children}
+    </Ctx.Provider>
+  )
+}
+
+// ---------- banner UI ----------
+
+export default function UpdateBanner() {
+  const { t } = useT()
+  const { updateAvailable, triggerUpdate } = useUpdateAvailable()
+
   if (!updateAvailable) return null
 
   return (
-    <div className="w-full bg-blue-700 text-white px-4 py-2.5 flex items-center justify-center gap-3 z-50">
+    <div className="w-full bg-amber-400 text-amber-950 px-4 py-2.5 flex items-center justify-center gap-3 z-50">
       <RefreshCw size={14} className="flex-shrink-0" />
       <span className="text-sm font-medium">{t("update.available")}</span>
       <button
-        onClick={handleUpdate}
-        className="bg-white text-blue-700 px-3 py-1 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors"
+        onClick={triggerUpdate}
+        className="bg-amber-950 text-amber-50 px-3 py-1 rounded-lg text-sm font-semibold hover:bg-amber-900 transition-colors"
       >
         {t("update.button")}
       </button>
